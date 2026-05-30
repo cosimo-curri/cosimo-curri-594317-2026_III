@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.5.27)  27 MAY 2026 19:46
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.5.28)  29 MAY 2026 12:24
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -241,57 +241,53 @@ Package caption Info: New subtype `subtable' on input line 238.
 Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
 )
 CVPR 8.5 x 11-Inch Proceedings Style `cvpr.sty'.
-\cvprrulerbox=\box55
-\cvprrulercount=\count315
-\cvprruleroffset=\dimen183
-\cv@lineheight=\dimen184
-\cv@boxheight=\dimen185
-\cv@tmpbox=\box56
-\cv@refno=\count316
-\cv@tot=\count317
-\cv@tmpc@=\count318
-\cv@tmpc=\count319
-(/usr/share/texlive/texmf-dist/tex/latex/lineno/lineno.sty
-Package: lineno 2026/03/08 line numbers on paragraphs v5.9
-
-(/usr/share/texlive/texmf-dist/tex/latex/kvoptions/kvoptions.sty
-Package: kvoptions 2022-06-15 v3.15 Key value format for package options (HO)
-
-(/usr/share/texlive/texmf-dist/tex/generic/ltxcmds/ltxcmds.sty
-Package: ltxcmds 2023-12-04 v1.26 LaTeX kernel commands for general use (HO)
-)
-(/usr/share/texlive/texmf-dist/tex/latex/kvsetkeys/kvsetkeys.sty
-Package: kvsetkeys 2022-10-05 v1.19 Key value parser (HO)
-))
-\linenopenalty=\count320
-\output=\toks31
-\linenoprevgraf=\count321
-\linenumbersep=\dimen186
-\linenumberwidth=\dimen187
-\c@linenumber=\count322
-\c@pagewiselinenumber=\count323
-\c@LN@truepage=\count324
-\c@internallinenumber=\count325
-\c@internallinenumbers=\count326
-\quotelinenumbersep=\dimen188
-\bframerule=\dimen189
-\bframesep=\dimen190
-\bframebox=\box57
-\@LN@amsmath@ams@eqpen=\count327
-)
 (/usr/share/texlive/texmf-dist/tex/latex/enumitem/enumitem.sty
 Package: enumitem 2025/02/06 v3.11 Customized lists
 \labelindent=\skip56
-\enit@outerparindent=\dimen191
-\enit@toks=\toks32
-\enit@inbox=\box58
-\enit@count@id=\count328
-\enitdp@description=\count329
+\enit@outerparindent=\dimen183
+\enit@toks=\toks31
+\enit@inbox=\box55
+\enit@count@id=\count315
+\enitdp@description=\count316
 ))
-(./preamble.tex) (/usr/share/texlive/texmf-dist/tex/latex/hyperref/hyperref.sty
+(./preamble.tex)
+(/usr/share/texlive/texmf-dist/tex/latex/microtype/microtype.sty
+Package: microtype 2026/03/01 v3.2d Micro-typographical refinements (RS)
+\MT@toks=\toks32
+\MT@tempbox=\box56
+\MT@count=\count317
+LaTeX Info: Redefining \noprotrusionifhmode on input line 1084.
+LaTeX Info: Redefining \leftprotrusion on input line 1085.
+\MT@prot@toks=\toks33
+LaTeX Info: Redefining \rightprotrusion on input line 1104.
+LaTeX Info: Redefining \textls on input line 1449.
+\MT@outer@kern=\dimen184
+LaTeX Info: Redefining \microtypecontext on input line 2053.
+LaTeX Info: Redefining \textmicrotypecontext on input line 2070.
+\MT@listname@count=\count318
+
+(/usr/share/texlive/texmf-dist/tex/latex/microtype/microtype-pdftex.def
+File: microtype-pdftex.def 2026/03/01 v3.2d Definitions specific to pdftex (RS)
+
+LaTeX Info: Redefining \lsstyle on input line 944.
+LaTeX Info: Redefining \lslig on input line 944.
+\MT@outer@space=\skip57
+)
+Package microtype Info: Loading configuration file microtype.cfg.
+
+(/usr/share/texlive/texmf-dist/tex/latex/microtype/microtype.cfg
+File: microtype.cfg 2026/03/01 v3.2d microtype main configuration file (RS)
+)
+LaTeX Info: Redefining \microtypesetup on input line 3065.
+)
+(/usr/share/texlive/texmf-dist/tex/latex/hyperref/hyperref.sty
 Package: hyperref 2026-04-24 v7.01q Hypertext links for LaTeX
+
 (/usr/share/texlive/texmf-dist/tex/generic/iftex/iftex.sty
 Package: iftex 2024/12/12 v1.0g TeX engine tests
+)
+(/usr/share/texlive/texmf-dist/tex/latex/kvsetkeys/kvsetkeys.sty
+Package: kvsetkeys 2022-10-05 v1.19 Key value parser (HO)
 )
 (/usr/share/texlive/texmf-dist/tex/generic/kvdefinekeys/kvdefinekeys.sty
 Package: kvdefinekeys 2019-12-19 v1.6 Define keys (HO)
@@ -299,6 +295,9 @@ Package: kvdefinekeys 2019-12-19 v1.6 Define keys (HO)
 (/usr/share/texlive/texmf-dist/tex/generic/pdfescape/pdfescape.sty
 Package: pdfescape 2019/12/09 v1.15 Implements pdfTeX's escape features (HO)
 
+(/usr/share/texlive/texmf-dist/tex/generic/ltxcmds/ltxcmds.sty
+Package: ltxcmds 2023-12-04 v1.26 LaTeX kernel commands for general use (HO)
+)
 (/usr/share/texlive/texmf-dist/tex/generic/pdftexcmds/pdftexcmds.sty
 Package: pdftexcmds 2020-06-27 v0.33 Utility functions of pdfTeX for LuaTeX (HO
 )
@@ -321,16 +320,19 @@ Package: refcount 2019/12/15 v3.6 Data extraction from label references (HO)
 )
 (/usr/share/texlive/texmf-dist/tex/generic/gettitlestring/gettitlestring.sty
 Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
-)
-\c@section@level=\count330
+
+(/usr/share/texlive/texmf-dist/tex/latex/kvoptions/kvoptions.sty
+Package: kvoptions 2022-06-15 v3.15 Key value format for package options (HO)
+))
+\c@section@level=\count319
 )
 (/usr/share/texlive/texmf-dist/tex/generic/stringenc/stringenc.sty
 Package: stringenc 2019/11/29 v1.12 Convert strings between diff. encodings (HO
 )
 )
-\@linkdim=\dimen192
-\Hy@linkcounter=\count331
-\Hy@pagecounter=\count332
+\@linkdim=\dimen185
+\Hy@linkcounter=\count320
+\Hy@pagecounter=\count321
 
 (/usr/share/texlive/texmf-dist/tex/latex/hyperref/pd1enc.def
 File: pd1enc.def 2026-04-24 v7.01q Hyperref: PDFDocEncoding definition (HO)
@@ -340,7 +342,7 @@ Now handling font encoding PD1 ...
 (/usr/share/texlive/texmf-dist/tex/generic/intcalc/intcalc.sty
 Package: intcalc 2019/12/15 v1.3 Expandable calculations with integers (HO)
 )
-\Hy@SavedSpaceFactor=\count333
+\Hy@SavedSpaceFactor=\count322
 
 (/usr/share/texlive/texmf-dist/tex/latex/hyperref/puenc.def
 File: puenc.def 2026-04-24 v7.01q Hyperref: PDF Unicode definition (HO)
@@ -373,16 +375,16 @@ Package: bigintcalc 2019/12/15 v1.5 Expandable calculations on big integers (HO
 Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
 84.
 ))
-\c@Hy@tempcnt=\count334
+\c@Hy@tempcnt=\count323
 LaTeX Info: Redefining \url on input line 4805.
-\XeTeXLinkMargin=\dimen193
+\XeTeXLinkMargin=\dimen186
 
 (/usr/share/texlive/texmf-dist/tex/generic/bitset/bitset.sty
 Package: bitset 2019/12/09 v1.3 Handle bit-vector datatype (HO)
 )
-\Fld@menulength=\count335
-\Field@Width=\dimen194
-\Fld@charsize=\dimen195
+\Fld@menulength=\count324
+\Field@Width=\dimen187
+\Fld@charsize=\dimen188
 Package hyperref Info: Hyper figures OFF on input line 6091.
 Package hyperref Info: Link nesting OFF on input line 6096.
 Package hyperref Info: Hyper index ON on input line 6099.
@@ -390,17 +392,17 @@ Package hyperref Info: backreferencing ON on input line 6104.
 Package hyperref Info: Link coloring ON on input line 6109.
 Package hyperref Info: Link coloring with OCG OFF on input line 6116.
 Package hyperref Info: PDF/A mode OFF on input line 6121.
-\Hy@abspage=\count336
-\c@Item=\count337
-\c@Hfootnote=\count338
+\Hy@abspage=\count325
+\c@Item=\count326
+\c@Hfootnote=\count327
 )
 Package hyperref Info: Driver (autodetected): hpdftex.
 
 (/usr/share/texlive/texmf-dist/tex/latex/hyperref/hpdftex.def
 File: hpdftex.def 2026-04-24 v7.01q Hyperref driver for pdfTeX
-\Fld@listcount=\count339
-\c@bookmark@seq@number=\count340
-\Hy@SectionHShift=\skip57
+\Fld@listcount=\count328
+\c@bookmark@seq@number=\count329
+\Hy@SectionHShift=\skip58
 )
 (/usr/share/texlive/texmf-dist/tex/latex/cleveref/cleveref.sty
 Package: cleveref 2018/03/27 v0.21.4 Intelligent cross-referencing
@@ -421,49 +423,49 @@ Package cleveref Info: always capitalise cross-reference names on input line 78
 52.
 )
 ==> First Aid for cleveref.sty applied!
-LaTeX Font Info:    Trying to load font information for OT1+ptm on input line 4
-8.
+LaTeX Font Info:    Trying to load font information for OT1+ptm on input line 2
+3.
 (/usr/share/texlive/texmf-dist/tex/latex/psnfss/ot1ptm.fd
 File: ot1ptm.fd 2001/06/04 font definitions for OT1/ptm.
 )
 (/usr/share/texlive/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 File: l3backend-pdftex.def 2026-02-18 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count341
+\l__color_backend_stack_int=\count330
 )
 (./main.aux)
 \openout1 = `main.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 48.
-LaTeX Font Info:    ... okay on input line 48.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 48.
-LaTeX Font Info:    ... okay on input line 48.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 48.
-LaTeX Font Info:    ... okay on input line 48.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 48.
-LaTeX Font Info:    ... okay on input line 48.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 48.
-LaTeX Font Info:    ... okay on input line 48.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 48.
-LaTeX Font Info:    ... okay on input line 48.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 48.
-LaTeX Font Info:    ... okay on input line 48.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 48.
-LaTeX Font Info:    ... okay on input line 48.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 48.
-LaTeX Font Info:    ... okay on input line 48.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
  (/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count342
-\scratchdimen=\dimen196
-\scratchbox=\box59
-\nofMPsegments=\count343
-\nofMParguments=\count344
-\everyMPshowfont=\toks33
-\MPscratchCnt=\count345
-\MPscratchDim=\dimen197
-\MPnumerator=\count346
-\makeMPintoPDFobject=\count347
-\everyMPtoPDFconversion=\toks34
+\scratchcounter=\count331
+\scratchdimen=\dimen189
+\scratchbox=\box57
+\nofMPsegments=\count332
+\nofMParguments=\count333
+\everyMPshowfont=\toks34
+\MPscratchCnt=\count334
+\MPscratchDim=\dimen190
+\MPnumerator=\count335
+\makeMPintoPDFobject=\count336
+\everyMPtoPDFconversion=\toks35
 ) (/usr/share/texlive/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
 
@@ -486,46 +488,72 @@ Package caption Info: hyperref package is loaded.
 Package caption Info: End \AtBeginDocument code.
 
 ABD: EveryShipout initializing macros
-Package backref Info: ** backref set up for natbib ** on input line 48.
-Package hyperref Info: Link coloring ON on input line 48.
- (./main.out) (./main.out)
+LaTeX Info: Redefining \microtypecontext on input line 23.
+Package microtype Info: Applying patch `item' on input line 23.
+Package microtype Info: Applying patch `toc' on input line 23.
+Package microtype Info: Applying patch `eqnum' on input line 23.
+Package microtype Info: Applying patch `footnote' on input line 23.
+Package microtype Info: Applying patch `verbatim' on input line 23.
+LaTeX Info: Redefining \microtypesetup on input line 23.
+Package microtype Info: Generating PDF output.
+Package microtype Info: Character protrusion enabled (level 2).
+Package microtype Info: Using default protrusion set `alltext'.
+Package microtype Info: Automatic font expansion enabled (level 2),
+(microtype)             stretch: 20, shrink: 20, step: 1, non-selected.
+Package microtype Info: Using default expansion set `alltext-nott'.
+Package microtype Info: Patching command `\showhyphens'.
+Package microtype Info: No adjustment of tracking.
+Package microtype Info: No adjustment of interword spacing.
+Package microtype Info: No adjustment of character kerning.
+
+(/usr/share/texlive/texmf-dist/tex/latex/microtype/mt-ptm.cfg
+File: mt-ptm.cfg 2006/04/20 v1.7 microtype config. file: Times (RS)
+)
+Package backref Info: ** backref set up for natbib ** on input line 23.
+Package hyperref Info: Link coloring ON on input line 23.
+ (./main.out)
+(./main.out)
 \@outlinefile=\write3
 \openout3 = `main.out'.
 
-LaTeX Font Info:    Trying to load font information for U+msa on input line 50.
+ (/usr/share/texlive/texmf-dist/tex/latex/microtype/mt-cmr.cfg
+File: mt-cmr.cfg 2013/05/19 v2.2 microtype config. file: Computer Modern Roman 
+(RS)
+)
+LaTeX Font Info:    Trying to load font information for U+msa on input line 25.
 
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 50.
+(/usr/share/texlive/texmf-dist/tex/latex/microtype/mt-msa.cfg
+File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
+)
+LaTeX Font Info:    Trying to load font information for U+msb on input line 25.
 
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
-(./sec/0_abstract.tex) (./sec/1_intro.tex
-LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 3
-6.
+(/usr/share/texlive/texmf-dist/tex/latex/microtype/mt-msb.cfg
+File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
+)
+LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 2
+5.
 
 (/usr/share/texlive/texmf-dist/tex/latex/psnfss/ot1pcr.fd
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
-)
-LaTeX Font Info:    Trying to load font information for OT1+phv on input line 6
-6.
-
-(/usr/share/texlive/texmf-dist/tex/latex/psnfss/ot1phv.fd
-File: ot1phv.fd 2020/03/25 scalable font definitions for OT1/phv.
-) [1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texlive/texm
-f-dist/fonts/enc/dvips/base/8r.enc}
-
-
-] [2]) (./sec/2_formatting.tex [3] [4]) (./sec/3_finalcopy.tex)
-(./main.bbl (./main.brf)
+) (./sec/abstract.tex) (./sec/introduction.tex) (./sec/experimental_protocol.te
+x)
+(./sec/conclusion.tex) (./main.bbl (./main.brf)
 \tf@brf=\write4
 \openout4 = `main.brf'.
 
-) [5
+ [1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texlive/texmf
+-dist/fonts/enc/dvips/base/8r.enc}
+
+
+]) [2
 
 ] (./main.aux)
  ***********
@@ -533,35 +561,26 @@ LaTeX2e <2025-11-01>
 L3 programming layer <2026-03-20>
  ***********
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: 59DBDB252228B5EB099594C961825693;2319.
+(rerunfilecheck)             Checksum: 687987F724BA3C8DFA0ECC3DA69E45ED;444.
 Package rerunfilecheck Info: File `main.brf' has not changed.
-(rerunfilecheck)             Checksum: 8C01E2FF2EAB03221B5C479C26ABFCBF;571.
+(rerunfilecheck)             Checksum: 31BD3460630E12F759991D6B147285EC;265.
  ) 
 Here is how much of TeX's memory you used:
- 15205 strings out of 469296
- 250091 string characters out of 5465561
- 734798 words of memory out of 6000000
- 43784 multiletter control sequences out of 15000+600000
- 665472 words of font info for 120 fonts, out of 8000000 for 9000
+ 16808 strings out of 469296
+ 278809 string characters out of 5465561
+ 776849 words of memory out of 6000000
+ 45302 multiletter control sequences out of 15000+600000
+ 652438 words of font info for 148 fonts, out of 8000000 for 9000
  36 hyphenation exceptions out of 8191
- 90i,10n,98p,432b,696s stack positions out of 10000i,1000n,20000p,200000b,200000s
-</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></us
-r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/share
-/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi9.pfb></usr/share/texliv
-e/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf
--dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/share/texlive/texmf-dist/fo
-nts/type1/public/amsfonts/cm/cmr9.pfb></usr/share/texlive/texmf-dist/fonts/type
-1/public/amsfonts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/type1/publ
-ic/amsfonts/cm/cmti10.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/courie
-r/ucrr8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/helvetic/uhvb8a.pfb
-></usr/share/texlive/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></usr/share
+ 90i,9n,98p,1061b,636s stack positions out of 10000i,1000n,20000p,200000b,200000s
+</usr/share/texlive/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb></usr/share
 /texlive/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/share/texlive/texmf-
 dist/fonts/type1/urw/times/utmr8a.pfb></usr/share/texlive/texmf-dist/fonts/type
 1/urw/times/utmri8a.pfb>
-Output written on main.pdf (5 pages, 177377 bytes).
+Output written on main.pdf (2 pages, 57887 bytes).
 PDF statistics:
- 233 PDF objects out of 1000 (max. 8388607)
- 196 compressed objects within 2 object streams
- 37 named destinations out of 1000 (max. 500000)
- 145 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 70 PDF objects out of 1000 (max. 8388607)
+ 57 compressed objects within 1 object stream
+ 12 named destinations out of 1000 (max. 500000)
+ 33313 words of extra memory for PDF output out of 35830 (max. 10000000)
 

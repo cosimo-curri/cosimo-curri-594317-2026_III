@@ -1,0 +1,90 @@
+manifests:
+  raw_dir: data/raw
+  output_dir: data/manifests
+
+datasets:
+  ex_dark:
+    root: ex_dark
+    output: ex_dark.csv
+
+    splits:
+      test:
+        input_dir: .
+
+    pairing:
+      strategy: category_dirs
+
+  lol_v1:
+    root: lol_v1
+    output: lol_v1.csv
+
+    splits:
+      test:
+        sources:
+          - input_dir: our485/low
+            target_dir: our485/high
+          - input_dir: eval15/low
+            target_dir: eval15/high
+
+    pairing:
+      strategy: same_filename
+
+  lol_v2_real:
+    root: lol_v2/real_captured
+    output: lol_v2_real.csv
+
+    splits:
+      train:
+        input_dir: train/low
+        target_dir: train/normal
+      test:
+        input_dir: test/low
+        target_dir: test/normal
+
+    validation:
+      from_split: train
+      fraction: 0.1
+      seed: 42
+
+    pairing:
+      strategy: prefix_replace
+      input_prefix: low
+      target_prefix: normal
+
+  lol_v2_synthetic:
+    root: lol_v2/synthetic
+    output: lol_v2_synthetic.csv
+
+    splits:
+      train:
+        input_dir: train/low
+        target_dir: train/normal
+      test:
+        input_dir: test/low
+        target_dir: test/normal
+
+    validation:
+      from_split: train
+      fraction: 0.1
+      seed: 42
+
+    pairing:
+      strategy: same_filename
+
+  mill_s:
+    root: mill_s
+    output: mill_s.csv
+
+    splits:
+      test:
+        sources:
+          - input_dir: train/input
+            target_dir: train/gt
+          - input_dir: validation/input
+            target_dir: validation/gt
+          - input_dir: test/input
+            target_dir: test/gt
+
+    pairing:
+      strategy: suffix_level_to_gt
+      separator: "-"
