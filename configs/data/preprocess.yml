@@ -1,0 +1,10 @@
+preprocessing:
+  input_manifest_dir: data/manifests
+  output_dir: data/preprocessed
+
+  image:
+    size: [256, 256]
+    output_format: png
+
+  statistics:
+    dark_threshold: 0.10

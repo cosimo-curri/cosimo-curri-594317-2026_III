@@ -1,0 +1,38 @@
+\section{End-to-End Pipeline}
+
+The experimental workflow is organized as a sequence of modular stages, in which each stage performs a specific task and produces outputs for the following stages, from the raw datasets to the final quantitative and qualitative evaluation. The planned pipeline consists of (i) manifest generation, (ii) offline preprocessing, (iii) model training, and (iv) model evaluation.
+
+The only dataset-specific stage is manifest generation. Besides its natural role of organizing the data, this step is intentionally designed to convert datasets with different structures into a common format. As a result, the subsequent stages of the pipeline can operate on the same data representation without relying on the original organization of each dataset, making them effectively dataset-agnostic.
+
+\subsection{Manifest Generation}
+
+The purpose of the first stage of the pipeline is to scan the original dataset folders and build CSV manifest files from their structure. In each manifest, every row represents one image sample and stores the dataset name, the split to which the sample belongs, the path of the low-light input image, the path of the corresponding target image when available, and optional metadata such as the image category or the illumination level.
+
+This step is necessary because the datasets used in this project are not organized in the same way. Some datasets provide paired low-light and normal-light images with the same filename, while others use different filename conventions. ExDark is instead unpaired and organized by object category. MILLs also includes an illumination level in the input filename, which is useful for analyzing how performance changes under different lighting conditions. Without this standardization step, the subsequent scripts in the pipeline would need to contain several dataset-specific rules.
+
+For this reason, manifest generation is the only intentionally dataset-specific part of the pipeline. The script reads a YAML configuration file that describes where each dataset is located, which output file should be produced, and how the corresponding manifest should be created. In LOL-v1 and LOL-v2 Synthetic, low-light images and their corresponding reference images share the same filename, making the association straightforward. In LOL-v2 Real, the filenames differ only because low-light and reference images use different prefixes. ExDark follows a completely different structure: images are grouped by category and no reference image is provided, so only the image path and category information are recorded. Finally, in MILLs, the filename also contains information about the illumination level, which is extracted and stored together with the path of the corresponding reference image.
+
+The output of this step is a CSV manifest file for each dataset, with a fixed column structure. This common format is what makes the later stages dataset-agnostic: once the manifests have been created, preprocessing, training, and evaluation only need to read the paths and metadata stored in the CSV files, without knowing how the original dataset was arranged on disk.
+
+The manifest generation script also supports reproducibility-oriented choices. When a dataset does not provide an explicit validation set, a validation split can be sampled from the training split using a fixed random seed. Moreover, the generated rows are sorted according to the split and image path, making the row order deterministic across runs.
+
+\subsection{Offline Preprocessing}
+
+After manifest generation, all datasets are processed by a common offline preprocessing script. This stage is called ``offline'' because it contains deterministic preliminary operations, that are performed once rather than repeatedly during training. The processed images are stored on disk and are then used by both the training and evaluation stages.
+
+The script reads the CSV manifests produced in the previous stage of the pipeline and creates a preprocessed version of each dataset on disk. For each dataset, it also writes a new CSV manifest with the same columns as the original one, but with paths updated to the preprocessed images.
+
+Each image undergoes the following deterministic operations: (i) loading with EXIF orientation applied when available, (ii) conversion to RGB, (iii) resizing to $256 \times 256$ using Lanczos interpolation to estimate pixel values from neighboring pixels, and (iv) saving in PNG format. Applying the EXIF orientation avoids processing photographs with an incorrect rotation.
+
+A fixed resizing strategy is used instead of cropping. In this project, preserving the whole scene during preprocessing was considered preferable to selecting a local region, because cropping would permanently discard part of the image and could remove relevant low-light regions, light sources, objects, or failure cases needed for cross-dataset analysis. Although resizing may slightly distort the aspect ratio of some images, it keeps the full scene and maintains a fixed deterministic input size for all datasets. Random crops and other data augmentation operations are therefore left to the training stage, where they can be applied only to the training split.
+
+Before processing a manifest, the script performs a lightweight consistency check. It verifies that no input path is duplicated within the same split and that the same input path does not appear in different splits. These checks are intentionally limited, since the dataset-specific pairing rules have already been handled during manifest generation.
+
+The script also computes simple dataset-level statistics before applying the final resize. For each input image, a luminance estimate is computed from the RGB channels using the ITU-R BT.709 luma coefficients:
+\begin{equation}
+	Y = 0.2126R + 0.7152G + 0.0722B,
+	\label{eq:luminance}
+\end{equation}
+where $R$, $G$, and $B$ are scaled to $[0,1]$. The percentage of dark pixels is then defined as the fraction of pixels with $Y < 0.10$. For paired datasets, the same luminance statistic is also computed on the target images. These statistics are summarized in Table~\ref{tab:dataset_statistics} and provide a compact description of the illumination distribution of each dataset. The table shows that LOL-v1 and LOL-v2 Real have very similar input luminance distributions, supporting the use of LOL-v1 as a close cross-dataset benchmark for the main training domain. LOL-v2 Synthetic and MILLs are instead brighter on average, indicating a larger distribution shift in terms of illumination. ExDark lies between these cases in terms of input luminance and remains useful as an unpaired real-world stress test.
+
+\input{tab/dataset_statistics}

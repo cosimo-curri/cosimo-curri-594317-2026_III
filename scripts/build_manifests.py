@@ -1,13 +1,20 @@
 from __future__ import annotations
 
 import argparse
-import csv
 import math
 import random
 from pathlib import Path
 from typing import Any
 
-import yaml
+from bootstrap import add_project_root_to_path
+
+
+add_project_root_to_path()  # allows imports from src
+
+
+from src.low_light_enhancement.framework.io import load_config
+from src.low_light_enhancement.framework.io import relative_path
+from src.low_light_enhancement.framework.io import write_csv_rows
 
 
 MANIFEST_COLUMNS = [
@@ -41,15 +48,6 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def load_config(config_path: Path) -> dict[str, Any]:
-    with config_path.open("r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
-
-
-def relative_path(path: Path) -> str:
-    return path.resolve().relative_to(Path.cwd().resolve()).as_posix()
-
-
 def list_image_files(directory: Path, recursive: bool = False) -> list[Path]:
     pattern = "**/*" if recursive else "*"
 
@@ -62,15 +60,6 @@ def list_image_files(directory: Path, recursive: bool = False) -> list[Path]:
 
 def iter_split_sources(split_config: dict[str, Any]) -> list[dict[str, Any]]:
     return split_config.get("sources", [split_config])
-
-
-def write_manifest(output_path: Path, rows: list[dict[str, str]]) -> None:
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-
-    with output_path.open("w", encoding="utf-8", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=MANIFEST_COLUMNS)
-        writer.writeheader()
-        writer.writerows(rows)
 
 
 def build_category_dirs_rows(
@@ -335,7 +324,12 @@ def main() -> None:
         )
 
         output_path = output_dir / dataset_config["output"]
-        write_manifest(output_path, rows)
+
+        write_csv_rows(
+            output_path=output_path,
+            rows=rows,
+            fieldnames=MANIFEST_COLUMNS
+        )
 
         print(f"Wrote {len(rows)} rows to: {output_path}")
 
