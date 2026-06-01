@@ -1,1 +1,4 @@
 PyYAML==6.0.3
+numpy==2.4.6
+Pillow==12.2.0
+tqdm==4.67.3

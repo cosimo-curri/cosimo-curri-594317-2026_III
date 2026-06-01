@@ -1,0 +1,6 @@
+dataset,total_samples,median_original_size,input_luminance,dark_pixels,target_luminance
+ex_dark,7363,640x500,0.143 ± 0.086,59.6%,—
+lol_v1,500,600x400,0.061 ± 0.041,82.7%,0.458 ± 0.102
+lol_v2_real,789,600x400,0.062 ± 0.042,80.9%,0.436 ± 0.105
+lol_v2_synthetic,1000,384x384,0.240 ± 0.138,46.7%,0.513 ± 0.141
+mill_s,499,600x400,0.244 ± 0.110,16.4%,0.369 ± 0.095

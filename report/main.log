@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.5.28)  29 MAY 2026 12:24
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.5.28)  31 MAY 2026 18:29
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -544,43 +544,41 @@ LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 2
 (/usr/share/texlive/texmf-dist/tex/latex/psnfss/ot1pcr.fd
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
 ) (./sec/abstract.tex) (./sec/introduction.tex) (./sec/experimental_protocol.te
-x)
-(./sec/conclusion.tex) (./main.bbl (./main.brf)
+x [1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texlive/texm
+f-dist/fonts/enc/dvips/base/8r.enc}
+
+
+]) (./sec/conclusion.tex) (./main.bbl (./main.brf)
 \tf@brf=\write4
 \openout4 = `main.brf'.
 
- [1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texlive/texmf
--dist/fonts/enc/dvips/base/8r.enc}
-
-
-]) [2
-
-] (./main.aux)
+) [2]
+(./main.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-03-20>
  ***********
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: 687987F724BA3C8DFA0ECC3DA69E45ED;444.
+(rerunfilecheck)             Checksum: 18EC12853044019E14F1D0C4EB891B28;764.
 Package rerunfilecheck Info: File `main.brf' has not changed.
 (rerunfilecheck)             Checksum: 31BD3460630E12F759991D6B147285EC;265.
  ) 
 Here is how much of TeX's memory you used:
- 16808 strings out of 469296
- 278809 string characters out of 5465561
- 776849 words of memory out of 6000000
- 45302 multiletter control sequences out of 15000+600000
- 652438 words of font info for 148 fonts, out of 8000000 for 9000
+ 16843 strings out of 469296
+ 279146 string characters out of 5465561
+ 775849 words of memory out of 6000000
+ 45304 multiletter control sequences out of 15000+600000
+ 654735 words of font info for 169 fonts, out of 8000000 for 9000
  36 hyphenation exceptions out of 8191
- 90i,9n,98p,1061b,636s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 90i,9n,98p,1120b,463s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texlive/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb></usr/share
 /texlive/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/share/texlive/texmf-
 dist/fonts/type1/urw/times/utmr8a.pfb></usr/share/texlive/texmf-dist/fonts/type
 1/urw/times/utmri8a.pfb>
-Output written on main.pdf (2 pages, 57887 bytes).
+Output written on main.pdf (2 pages, 61587 bytes).
 PDF statistics:
- 70 PDF objects out of 1000 (max. 8388607)
- 57 compressed objects within 1 object stream
- 12 named destinations out of 1000 (max. 500000)
- 33313 words of extra memory for PDF output out of 35830 (max. 10000000)
+ 79 PDF objects out of 1000 (max. 8388607)
+ 66 compressed objects within 1 object stream
+ 14 named destinations out of 1000 (max. 500000)
+ 33329 words of extra memory for PDF output out of 35830 (max. 10000000)
 
