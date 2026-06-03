@@ -28,11 +28,16 @@ A fixed resizing strategy is used instead of cropping. In this project, preservi
 
 Before processing a manifest, the script performs a lightweight consistency check. It verifies that no input path is duplicated within the same split and that the same input path does not appear in different splits. These checks are intentionally limited, since the dataset-specific pairing rules have already been handled during manifest generation.
 
-The script also computes simple dataset-level statistics before applying the final resize. For each input image, a luminance estimate is computed from the RGB channels using the ITU-R BT.709 luma coefficients:
+The script also computes simple dataset-level statistics before applying the final resize. For each image of size ${H \times W}$, a luminance map $Y \in [0,1]^{H \times W}$ is computed from the RGB channels using the ITU-R BT.709 luma coefficients:
 \begin{equation}
-	Y = 0.2126R + 0.7152G + 0.0722B,
+	Y_{i,j} = 0.2126R_{i,j} + 0.7152G_{i,j} + 0.0722B_{i,j},
 	\label{eq:luminance}
 \end{equation}
-where $R$, $G$, and $B$ are scaled to $[0,1]$. The percentage of dark pixels is then defined as the fraction of pixels with $Y < 0.10$. For paired datasets, the same luminance statistic is also computed on the target images. These statistics are summarized in Table~\ref{tab:dataset_statistics} and provide a compact description of the illumination distribution of each dataset. The table shows that LOL-v1 and LOL-v2 Real have very similar input luminance distributions, supporting the use of LOL-v1 as a close cross-dataset benchmark for the main training domain. LOL-v2 Synthetic and MILLs are instead brighter on average, indicating a larger distribution shift in terms of illumination. ExDark lies between these cases in terms of input luminance and remains useful as an unpaired real-world stress test.
+where $R_{i,j}$, $G_{i,j}$, and $B_{i,j}$ are the RGB values of pixel $(i,j)$, scaled to $[0,1]$. Based on this luminance map, the dark pixel ratio is defined as
+\begin{equation}
+	\mathrm{DPR} = \frac{1}{HW}\sum_{i=1}^{H}\sum_{j=1}^{W} 1\left[Y_{i,j} < \tau_d\right], \quad \tau_d = 0.10
+	\label{eq:dpr}
+\end{equation}
+where $H$ and $W$ are the image height and width respectively, $\tau_d$ is the dark-pixel threshold, and $1[\cdot]$ is the indicator function, that is equal to one when the condition is true and zero otherwise. For paired datasets, the same luminance statistics are also computed on the target images. These statistics are summarized in Table~\ref{tab:dataset_statistics} and provide a compact description of the illumination distribution of each dataset. The table shows that LOL-v1 and LOL-v2 Real have very similar input luminance distributions, supporting the use of LOL-v1 as a close cross-dataset benchmark for the main training domain. LOL-v2 Synthetic and MILLs are instead brighter on average, indicating a larger distribution shift in terms of illumination. ExDark lies between these cases in terms of input luminance and remains useful as an unpaired real-world stress test.
 
 \input{tab/dataset_statistics}

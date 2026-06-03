@@ -92,9 +92,11 @@ class UpBlock(nn.Module):
 
         self.upsampling = upsampling
 
-        if upsampling == "bilinear":  # upsamples spatially without learnable weights
+        if upsampling == "bilinear":
+            # Upsamples spatially without learnable weights
             conv_in_channels = in_channels + skip_channels
-        elif upsampling == "transposed":  # transposed convolution with learnable weights
+        elif upsampling == "transposed":
+            # Transposed convolution with learnable weights
             self.up = nn.ConvTranspose2d(
                 in_channels,
                 out_channels,
@@ -120,7 +122,8 @@ class UpBlock(nn.Module):
 
     def forward(self, x: Tensor, skip: Tensor) -> Tensor:
         if self.upsampling == "bilinear":
-            x = F.interpolate(  # match the decoder feature map to the skip resolution
+            # Match the decoder feature map to the skip resolution
+            x = F.interpolate(
                 x,
                 size=skip.shape[-2:],
                 mode="bilinear",
@@ -130,7 +133,8 @@ class UpBlock(nn.Module):
             x = self.up(x)
 
             if x.shape[-2:] != skip.shape[-2:]:
-                x = F.interpolate(  # match the decoder feature map to the skip resolution
+                # Match the decoder feature map to the skip resolution
+                x = F.interpolate(
                     x,
                     size=skip.shape[-2:],
                     mode="bilinear",
@@ -227,10 +231,6 @@ def build_unet(config: Mapping[str, Any] | None = None) -> UNet:  # from config 
     return UNet(**dict(config))
 
 
-def count_parameters(model: nn.Module) -> int:
-    return sum(parameter.numel() for parameter in model.parameters())
-
-
 # Conv (used twice in DoubleConv)
 # Convolution -> optional normalization -> activation
 def _conv_norm_activation(
@@ -311,7 +311,8 @@ def _build_activation(activation: str) -> nn.Module:
     )
 
 
-# Normalization layers already learn a shift, so Conv2d bias is used only without normalization
+# Normalization layers already learn a shift.
+# Conv2d bias is used only without normalization.
 def _uses_bias(normalization: str) -> bool:
     return normalization == "none"
 

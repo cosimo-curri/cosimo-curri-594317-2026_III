@@ -12,9 +12,11 @@ from bootstrap import add_project_root_to_path
 add_project_root_to_path()  # allows imports from src
 
 
-from src.low_light_enhancement.framework.io import load_config
-from src.low_light_enhancement.framework.io import relative_path
-from src.low_light_enhancement.framework.io import write_csv_rows
+from src.low_light_enhancement.framework.io import (
+    load_config,
+    relative_path,
+    write_csv_rows
+)
 
 
 MANIFEST_COLUMNS = [
@@ -35,7 +37,10 @@ SPLIT_ORDER = {  # manifests' row order
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(  # --help
-        description="Build ExDark, LOL-v1, LOL-v2, and MILLs manifests from a YAML configuration file."
+        description=(
+            "Build ExDark, LOL-v1, LOL-v2, and MILLs manifests "
+            "from a YAML configuration file."
+        )
     )
 
     parser.add_argument(

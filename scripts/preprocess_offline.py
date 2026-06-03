@@ -17,10 +17,12 @@ from bootstrap import add_project_root_to_path
 add_project_root_to_path()  # allows imports from src
 
 
-from src.low_light_enhancement.framework.io import load_config
-from src.low_light_enhancement.framework.io import read_csv_rows
-from src.low_light_enhancement.framework.io import relative_path
-from src.low_light_enhancement.framework.io import write_csv_rows
+from src.low_light_enhancement.framework.io import (
+    load_config,
+    read_csv_rows,
+    relative_path,
+    write_csv_rows
+)
 
 
 SUMMARY_COLUMNS = [
@@ -37,7 +39,10 @@ RESAMPLE_FILTER = Image.Resampling.LANCZOS
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Preprocess images from manifest files and compute dataset-level statistics."
+        description=(
+            "Preprocess images from manifest files and compute "
+            "dataset-level statistics."
+        )
     )
 
     parser.add_argument(
@@ -69,7 +74,8 @@ def validate_manifest_rows(
 
         for input_path in duplicated_paths:
             errors.append(
-                f"{manifest_path}: duplicated input path in {split_name}: {input_path}"
+                f"{manifest_path}: duplicated input path {input_path} "
+                f"in split {split_name}."
             )
 
     split_names = sorted(split_input_paths)
@@ -83,14 +89,15 @@ def validate_manifest_rows(
 
             for input_path in sorted(overlapping_paths):
                 errors.append(
-                    f"{manifest_path}: input path appears in both {split_name} and {other_split_name}: {input_path}"
+                    f"{manifest_path}: input path {input_path} appears in both "
+                    f"{split_name} and {other_split_name}."
                 )
 
     if errors:
         shown_errors = "\n".join(errors[:20])
 
         raise ValueError(
-            f"Validation failed for {manifest_path}\n{shown_errors}"
+            f"Validation failed for {manifest_path}\n{shown_errors}."
         )
 
 
