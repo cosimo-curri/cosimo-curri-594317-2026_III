@@ -29,7 +29,7 @@ optimizer:  # AdamW
 
 loss:
   name: l1_ssim
-  l1_weight: 0.8
+  l1_weight: 0.8  # weights must be non-negative and sum to 1.0
   ssim_weight: 0.2
 
 training:
