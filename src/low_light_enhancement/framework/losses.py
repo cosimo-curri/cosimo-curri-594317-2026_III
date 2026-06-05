@@ -1,8 +1,14 @@
 from __future__ import annotations
 
+from typing import Any
+
 from torch import Tensor, nn
 import torch.nn.functional as F
 
+from src.low_light_enhancement.framework.config_validation import (
+    require_non_negative_float,
+    require_positive_int
+)
 from src.low_light_enhancement.framework.image_ops import compute_ssim
 
 
@@ -19,14 +25,20 @@ class L1SSIMLoss(nn.Module):
     ) -> None:
         super().__init__()
 
-        l1_weight = float(l1_weight)
-        ssim_weight = float(ssim_weight)
+        l1_weight = require_non_negative_float(
+            l1_weight,
+            "loss.l1_weight"
+        )
 
-        if l1_weight < 0.0 or ssim_weight < 0.0:
-            raise ValueError(
-                "For L1SSIMLoss, l1_weight and ssim_weight must be non-negative. "
-                f"Got l1_weight={l1_weight}, ssim_weight={ssim_weight}."
-            )
+        ssim_weight = require_non_negative_float(
+            ssim_weight,
+            "loss.ssim_weight"
+        )
+
+        window_size = require_positive_int(
+            window_size,
+            "loss.window_size"
+        )
 
         total_weight = l1_weight + ssim_weight
 
@@ -54,13 +66,13 @@ class L1SSIMLoss(nn.Module):
         return self.l1_weight * l1_loss + self.ssim_weight * ssim_loss
 
 
-def build_loss(config: dict[str, float | str]) -> nn.Module:
+def build_loss(config: dict[str, Any]) -> nn.Module:
     loss_name = config["name"]
 
     if loss_name == "l1_ssim":
         return L1SSIMLoss(
-            l1_weight=float(config["l1_weight"]),
-            ssim_weight=float(config["ssim_weight"])
+            l1_weight=config["l1_weight"],
+            ssim_weight=config["ssim_weight"]
         )
 
     raise ValueError(f"Unsupported loss: {loss_name!r}.")

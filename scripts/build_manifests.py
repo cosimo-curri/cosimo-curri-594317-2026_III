@@ -12,6 +12,7 @@ from bootstrap import add_project_root_to_path
 add_project_root_to_path()  # allows imports from src
 
 
+from src.low_light_enhancement.framework.config_validation import require_fraction
 from src.low_light_enhancement.framework.io import (
     load_config,
     relative_path,
@@ -72,7 +73,7 @@ def build_category_dirs_rows(
     dataset_root: Path,
     split_name: str,
     split_config: dict[str, Any],
-    pairing_config: dict[str, Any]  # single dispatcher
+    pairing_config: dict[str, Any]  # kept for the shared builder signature
 ) -> list[dict[str, str]]:
     input_dir = (dataset_root / split_config["input_dir"]).resolve()
     image_paths = list_image_files(input_dir, recursive=True)
@@ -101,7 +102,7 @@ def build_same_filename_rows(
     dataset_root: Path,
     split_name: str,
     split_config: dict[str, Any],
-    pairing_config: dict[str, Any]  # single dispatcher
+    pairing_config: dict[str, Any]  # kept for the shared builder signature
 ) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
 
@@ -246,7 +247,12 @@ def apply_validation_split(
     validation_config: dict[str, Any]
 ) -> list[dict[str, str]]:
     from_split = validation_config["from_split"]
-    fraction = validation_config["fraction"]
+
+    fraction = require_fraction(
+        validation_config["fraction"],
+        "validation.fraction"
+    )
+
     seed = validation_config["seed"]
 
     source_indices = [
@@ -336,7 +342,7 @@ def main() -> None:
             fieldnames=MANIFEST_COLUMNS
         )
 
-        print(f"Wrote {len(rows)} rows to: {output_path}")
+        print(f"Wrote {len(rows)} rows to: {output_path}.")
 
 
 if __name__ == "__main__":

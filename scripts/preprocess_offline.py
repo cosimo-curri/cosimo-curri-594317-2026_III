@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import argparse
 import math
+import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 from statistics import median
 from typing import Any
 
 import numpy as np
-from PIL import Image, ImageOps
+from PIL import Image
 from tqdm import tqdm
 
 from bootstrap import add_project_root_to_path
@@ -17,9 +18,14 @@ from bootstrap import add_project_root_to_path
 add_project_root_to_path()  # allows imports from src
 
 
+from src.low_light_enhancement.framework.config_validation import (
+    require_output_size,
+    require_probability
+)
 from src.low_light_enhancement.framework.io import (
     load_config,
     read_csv_rows,
+    read_rgb_image,
     relative_path,
     write_csv_rows
 )
@@ -97,7 +103,7 @@ def validate_manifest_rows(
         shown_errors = "\n".join(errors[:20])
 
         raise ValueError(
-            f"Validation failed for {manifest_path}\n{shown_errors}."
+            f"Validation failed for {manifest_path}:\n{shown_errors}"
         )
 
 
@@ -133,12 +139,6 @@ def build_output_path(
     return (output_dir / dataset_id / relative_source_path).with_suffix(
         f".{output_format}"
     )
-
-
-def read_rgb_image(image_path: Path) -> Image.Image:
-    with Image.open(image_path) as image:
-        image = ImageOps.exif_transpose(image)  # fix orientation from EXIF metadata
-        return image.convert("RGB")
 
 
 def compute_image_statistics(
@@ -350,7 +350,12 @@ def process_manifest(
 
     processed_rows: list[dict[str, str]] = []
 
-    for row in tqdm(rows, desc=dataset_id, unit="sample"):
+    for row in tqdm(
+        rows,
+        desc=dataset_id,
+        unit="sample",
+        file=sys.stdout
+    ):
         processed_row = dict(row)
 
         input_output_path, input_statistics = process_image_once(
@@ -416,9 +421,17 @@ def main() -> None:
         preprocessing_config["output_dir"]
     ).resolve()
 
-    image_size = tuple(preprocessing_config["image"]["size"])
+    image_size = require_output_size(
+        preprocessing_config["image"]["size"],
+        "preprocessing.image.size"
+    )
+
     output_format = preprocessing_config["image"]["output_format"]
-    dark_threshold = preprocessing_config["statistics"]["dark_threshold"]
+
+    dark_threshold = require_probability(
+        preprocessing_config["statistics"]["dark_threshold"],
+        "preprocessing.statistics.dark_threshold"
+    )
 
     processed_images: dict[tuple[str, str], tuple[Path, dict[str, float]]] = {}
 

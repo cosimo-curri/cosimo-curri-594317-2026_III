@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 from collections import defaultdict
 from typing import Any
 
@@ -18,6 +19,30 @@ from src.low_light_enhancement.framework.metrics import (
     aggregate_metrics
 )
 from src.low_light_enhancement.framework.torch_utils import move_batch_to_device
+
+
+def build_progress_description(
+    event_prefix: str,
+    dataset: str,
+    epoch: int
+) -> str:
+    if event_prefix == "validation":
+        return f"validation epoch {epoch}"
+
+    if event_prefix == "test":
+        return f"test {dataset}"
+
+    if event_prefix == dataset:
+        return event_prefix
+
+    return f"{event_prefix}:{dataset}"
+
+
+def group_sort_key(value: str) -> tuple[int, int | str]:
+    if value.isdigit():
+        return (0, int(value))
+
+    return (1, value)
 
 
 class Evaluator:
@@ -62,8 +87,13 @@ class Evaluator:
         with torch.no_grad():
             progress = tqdm(
                 dataloader,
-                desc=f"{event_prefix}:{dataset}",
-                unit="batch"
+                desc=build_progress_description(
+                    event_prefix=event_prefix,
+                    dataset=dataset,
+                    epoch=epoch
+                ),
+                unit="batch",
+                file=sys.stdout
             )
 
             for batch in progress:
@@ -187,7 +217,10 @@ class Evaluator:
         group_by: str,
         groups: dict[str, list[dict[str, float]]]
     ) -> None:
-        for group_value, sample_metrics in sorted(groups.items()):
+        for group_value, sample_metrics in sorted(
+            groups.items(),
+            key=lambda item: group_sort_key(item[0])
+        ):
             means, stds = aggregate_metrics(sample_metrics)
 
             if self.text_logger is not None:

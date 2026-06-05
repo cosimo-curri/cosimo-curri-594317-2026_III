@@ -7,6 +7,8 @@ import torch
 from torch import Tensor, nn
 import torch.nn.functional as F
 
+from src.low_light_enhancement.framework.config_validation import require_positive_int
+
 
 # Standard U-Net block
 # Two consecutive convolutions let each U-Net level learn richer local features
@@ -159,8 +161,8 @@ class UNet(nn.Module):
     ) -> None:
         super().__init__()
 
-        self.in_channels = _validate_positive_int(in_channels, "in_channels")
-        self.out_channels = _validate_positive_int(out_channels, "out_channels")
+        self.in_channels = require_positive_int(in_channels, "in_channels")
+        self.out_channels = require_positive_int(out_channels, "out_channels")
         self.channels = _validate_channels(channels)
 
         self.input_block = DoubleConv(
@@ -280,7 +282,7 @@ def _build_normalization(
         return nn.InstanceNorm2d(num_channels, affine=True)
 
     if normalization == "group":
-        group_count = _validate_positive_int(group_count, "group_count")
+        group_count = require_positive_int(group_count, "group_count")
 
         if num_channels % group_count != 0:
             raise ValueError(
@@ -311,8 +313,8 @@ def _build_activation(activation: str) -> nn.Module:
     )
 
 
-# Normalization layers already learn a shift.
-# Conv2d bias is used only without normalization.
+# Normalization layers already learn a shift
+# Conv2d bias is used only without normalization
 def _uses_bias(normalization: str) -> bool:
     return normalization == "none"
 
@@ -325,15 +327,8 @@ def _validate_channels(channels: Sequence[int]) -> tuple[int, ...]:
         )
 
     validated_channels = tuple(
-        _validate_positive_int(channel, f"channels[{index}]")
+        require_positive_int(channel, f"channels[{index}]")
         for index, channel in enumerate(channels)
     )
 
     return validated_channels
-
-
-def _validate_positive_int(value: int, name: str) -> int:
-    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
-        raise ValueError(f"{name} must be a positive integer, got {value!r}.")
-
-    return value

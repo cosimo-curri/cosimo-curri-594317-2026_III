@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import itertools
+import json
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +25,49 @@ NON_GRID_KEYS = {
     "tie_breaker",
     "mode_tie_breaker"
 }
+
+SELECTION_CONFIG_HASH_EXCLUDED_PATHS: tuple[tuple[str, ...], ...] = (
+    ("experiment", "name"),
+    ("experiment", "seed"),
+    ("experiment", "restore_checkpoint"),
+    ("evaluation",),
+    ("data", "test_manifests")
+)
+
+
+def build_selection_config_hash(config: dict[str, Any]) -> str:
+    config_for_hash = copy.deepcopy(config)
+
+    for path in SELECTION_CONFIG_HASH_EXCLUDED_PATHS:
+        remove_nested_key(config_for_hash, path)
+
+    serialized_config = json.dumps(
+        config_for_hash,
+        sort_keys=True,
+        ensure_ascii=False,
+        default=str,
+        separators=(",", ":")
+    )
+
+    return hashlib.sha1(
+        serialized_config.encode("utf-8")
+    ).hexdigest()[:12]
+
+
+def remove_nested_key(
+    config: dict[str, Any],
+    path: tuple[str, ...]
+) -> None:
+    current: Any = config
+
+    for key in path[:-1]:
+        if not isinstance(current, dict) or key not in current:
+            return
+
+        current = current[key]
+
+    if isinstance(current, dict):
+        current.pop(path[-1], None)
 
 
 def load_experiment_config(config_path: Path) -> dict[str, Any]:
