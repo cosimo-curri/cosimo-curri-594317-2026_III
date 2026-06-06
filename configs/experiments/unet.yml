@@ -1,5 +1,5 @@
 experiment:
-  name: unet_experiment
+  name: unet_grid_seed_0_screening
   seed: 0
   # restore_checkpoint:
 
@@ -53,16 +53,18 @@ augmentation:  # fixed online train-time augmentation
 
 model:
   name: unet
-  channels:
+  channels:  # the only case where a list is used for the grid
+    - [16, 32, 64, 128]
     - [32, 64, 128, 256]
-  normalization: none  # none | batch | instance | group
-  activation: relu  # relu | leaky_relu
+    - [32, 64, 128, 256, 512]
+  normalization: [none, batch, instance, group]  # none | batch | instance | group
+  activation: leaky_relu  # relu | leaky_relu
   group_count: 8  # used only by normalization: group
-  upsampling: bilinear  # bilinear | transposed
+  upsampling: [bilinear, transposed]  # bilinear | transposed
 
 optimizer:  # AdamW (beta1=0.9, beta2=0.999; they are not configurable)
-  lr: 0.001
-  weight_decay: 0.0
+  lr: [0.0003, 0.0005, 0.001]
+  weight_decay: [0.0, 0.0001]
 
 loss:
   name: l1_ssim  # SSIM window_size=11; it is not configurable
