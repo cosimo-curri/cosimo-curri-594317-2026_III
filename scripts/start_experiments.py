@@ -44,6 +44,12 @@ def parse_args() -> argparse.Namespace:
         help="Path to the YAML configuration file."
     )
 
+    parser.add_argument(
+        "--no-progress-bar",
+        action="store_true",
+        help="Disable tqdm progress bars."
+    )
+
     return parser.parse_args()
 
 
@@ -71,7 +77,8 @@ def main() -> None:
                 config=resolved_config,
                 run_index=run_index,
                 logger=logger,
-                text_logger=text_logger
+                text_logger=text_logger,
+                progress_bar=not args.no_progress_bar
             )
 
             trainer.run()

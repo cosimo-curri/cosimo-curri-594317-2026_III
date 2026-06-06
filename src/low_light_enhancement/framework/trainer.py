@@ -52,12 +52,14 @@ class ExperimentTrainer:
         *,  # next options are keyword-only
         run_index: int,
         logger: JsonlLogger,
-        text_logger: TextLogger
+        text_logger: TextLogger,
+        progress_bar: bool = True
     ) -> None:
         self.config = config
         self.run_index = run_index
         self.logger = logger
         self.text_logger = text_logger
+        self.progress_bar = progress_bar
         self.device = get_device()
 
         self.experiment_name = config["experiment"]["name"]
@@ -357,7 +359,8 @@ class ExperimentTrainer:
             train_loader,
             desc=f"train epoch {epoch}",
             unit="batch",
-            file=sys.stdout
+            file=sys.stdout,
+            disable=not self.progress_bar
         ):
             batch = move_batch_to_device(batch, self.device)
 
@@ -391,7 +394,8 @@ class ExperimentTrainer:
             device=self.device,
             logger=None,
             text_logger=None,
-            loss_function=self.loss_function
+            loss_function=self.loss_function,
+            progress_bar=self.progress_bar
         )
 
         return evaluator.evaluate(
@@ -450,7 +454,8 @@ class ExperimentTrainer:
             device=self.device,
             logger=self.logger,
             text_logger=self.text_logger,
-            loss_function=self.loss_function
+            loss_function=self.loss_function,
+            progress_bar=self.progress_bar
         )
 
         training_config = self.config["training"]

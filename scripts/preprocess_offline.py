@@ -58,6 +58,12 @@ def parse_args() -> argparse.Namespace:
         help="Path to the YAML configuration file."
     )
 
+    parser.add_argument(
+        "--no-progress-bar",
+        action="store_true",
+        help="Disable tqdm progress bars."
+    )
+
     return parser.parse_args()
 
 
@@ -336,7 +342,8 @@ def process_manifest(
     output_format: str,
     dark_threshold: float,
     processed_images: dict[tuple[str, str], tuple[Path, dict[str, float]]],
-    dataset_statistics: dict[str, Any]
+    dataset_statistics: dict[str, Any],
+    progress_bar: bool
 ) -> None:
     dataset_id = manifest_path.stem
 
@@ -354,7 +361,8 @@ def process_manifest(
         rows,
         desc=dataset_id,
         unit="sample",
-        file=sys.stdout
+        file=sys.stdout,
+        disable=not progress_bar
     ):
         processed_row = dict(row)
 
@@ -409,6 +417,7 @@ def process_manifest(
 
 def main() -> None:
     args = parse_args()
+    progress_bar = not args.no_progress_bar
 
     config = load_config(args.config)
     preprocessing_config = config["preprocessing"]
@@ -447,7 +456,8 @@ def main() -> None:
             output_format=output_format,
             dark_threshold=dark_threshold,
             processed_images=processed_images,
-            dataset_statistics=dataset_statistics
+            dataset_statistics=dataset_statistics,
+            progress_bar=progress_bar
         )
 
     summary_rows = build_summary_rows(dataset_statistics)

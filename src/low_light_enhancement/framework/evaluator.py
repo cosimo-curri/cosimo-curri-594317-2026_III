@@ -53,7 +53,8 @@ class Evaluator:
         device: torch.device,
         logger: JsonlLogger | None = None,
         text_logger: TextLogger | None = None,
-        loss_function: nn.Module | None = None
+        loss_function: nn.Module | None = None,
+        progress_bar: bool = True
     ) -> None:
         self.model = model
         self.wrapper = wrapper
@@ -61,6 +62,7 @@ class Evaluator:
         self.logger = logger
         self.text_logger = text_logger
         self.loss_function = loss_function
+        self.progress_bar = progress_bar
         self.metric_computer = MetricComputer(device=device)
 
     def evaluate(
@@ -93,7 +95,8 @@ class Evaluator:
                     epoch=epoch
                 ),
                 unit="batch",
-                file=sys.stdout
+                file=sys.stdout,
+                disable=not self.progress_bar
             )
 
             for batch in progress:
