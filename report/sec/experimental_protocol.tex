@@ -1,25 +1,54 @@
 \section{Experimental Protocol}
+\label{sec:experimental_protocol}
 
-\subsection{Datasets}
+\subsection{General Strategy}
 
-The pipeline developed in this work is based on four datasets, each with a specific role in the experimental protocol: (i) LOL-v2~\cite{DBLP:journals/tip/YangWHWL21}, (ii) LOL-v1~\cite{DBLP:conf/bmvc/WeiWY018}, (iii) MILLs~\cite{DBLP:journals/corr/abs-2511-15496}, and (iv) ExDark~\cite{DBLP:journals/cviu/LohC19}. All models are trained on a single source domain and are then evaluated on additional datasets without fine-tuning. This choice is intended to measure cross-dataset generalization, i.e., the ability of each model to enhance low-light images whose distribution differs from the training data.
+The experimental protocol is designed to prevent test leakage and to ensure that the final evaluation of the studied models reflects genuine generalization performance. The main goal of the project is not only to obtain good in-domain enhancement performance on the main dataset, but also to understand whether a model trained on this source domain can generalize to different low-light datasets without fine-tuning.
 
-The main training dataset is LOL-v2. This dataset contains both a real-captured subset, hereafter referred to as LOL-v2 Real, and a synthetic subset, referred to as LOL-v2 Synthetic. In the main protocol, only LOL-v2 Real is used, meaning that the low-light/normal-light pairs are acquired from real scenes rather than obtained through synthetic low-light degradation. LOL-v2 is a paired dataset: each low-light image is associated with a corresponding normally exposed reference image, which can be used as the target for supervised training and evaluation.
+To address this goal, the project is organized around model families. For each model family, the experimental protocol is kept fixed and a dedicated grid search is defined to explore meaningful architectural and training choices. Whenever possible, all the configurations share the same experimental conditions, including the early stopping rule and the data augmentation policy. The remaining hyperparameters are explored through a grid whose size is kept comparable across model families, so that different families are compared under a similar experimental budget.
 
-LOL-v1 is used only as a paired cross-dataset evaluation set. It represents a relatively close cross-dataset scenario, because it belongs to the same general benchmark family as LOL-v2.
+All models are trained on a single source domain, LOL-v2 Real. The training split is used to optimize the model parameters, while the validation split is used for early stopping and model selection. The test sets of all datasets are never used during these steps. They are evaluated only after the validation-based selection procedure has been completed, in order to provide the final evidence of model performance and generalization.
 
-MILLs is used as a second paired cross-dataset evaluation set. In particular, the low-resolution DSLR split, MILLs-DSLR, is adopted to keep the evaluation computationally manageable. Unlike LOL-v1, this dataset introduces a controlled illumination setting. Its input images are associated with different illumination levels, and each input has a corresponding well-illuminated reference image. This makes it possible to evaluate the models not only with global results over the whole dataset, but also by studying how performance changes as the input illumination becomes more severe.
+For each model family, the experimental protocol is organized into four main stages: (i) a single-seed screening stage, in which all configurations of the grid search are trained with a single seed and ranked using validation performance; (ii) a multi-seed re-training stage, in which the three most promising configurations are trained with multiple random seeds to estimate both performance and stability; (iii) a validation-based model selection stage, in which the final configuration is chosen from the aggregated multi-seed validation results; and (iv) a final evaluation stage, in which the selected configuration is tested on the in-domain test set and on all cross-dataset test sets. Figure~\ref{fig:experimental_protocol} provides a visual overview of this workflow. The following subsections describe each stage in detail.
 
-Finally, ExDark is used as an unpaired stress-test dataset. Here, unpaired means that the dataset provides low-light images without a corresponding normally exposed reference image. Therefore, ExDark is not used for reference-based comparison, but for no-reference evaluation and qualitative failure analysis on real-world dark scenes. Its category-based organization is preserved, meaning that images remain grouped according to the object category provided by the dataset, such as cars, people, animals, or indoor objects. This organization may help inspect whether some failure cases are related to the type of scene or object.
+\input{fig/experimental_protocol/experimental_protocol}
 
-\subsection{Split Construction}
+\subsection{Single-Seed Screening}
 
-Split construction follows the role assigned to each dataset in the experimental protocol. For the main source domain, LOL-v2 Real, the official training split is used to derive the training and validation partitions. In particular, a fixed fraction of the official training samples is deterministically held out as validation data using a fixed random seed. The official test split is kept untouched for the final in-domain evaluation. In this context, ``in-domain'' means that training, validation, and testing images come from the same dataset and acquisition setting.
+The first experimental stage is a single-seed grid search, in which every configuration is trained using a single fixed seed. The purpose of this stage is not to produce final evidence, because a single seed can be affected by random initialization and data-loader randomness. Instead, the purpose is to reduce the search space and identify a small number of promising configurations.
 
-The synthetic subset of LOL-v2 is kept separate from the main protocol and is used only for an additional ablation study, aimed at evaluating whether synthetically degraded low-light examples improve or degrade generalization. When this subset is used, a validation partition is deterministically derived from the official training split using the same procedure adopted for LOL-v2 Real, ensuring consistency in the split construction process.
+Each configuration is trained on the LOL-v2 Real training split and monitored on the LOL-v2 Real validation split. The test sets are not evaluated during screening. For each run, validation structural similarity index measure (SSIM) is used as the primary criterion for checkpoint selection. This choice reflects the goal of low-light enhancement: the output should remain structurally similar to the reference image, preserving luminance, contrast, and local image structure, rather than only reduce the average pixel-wise error. Validation peak signal-to-noise ratio (PSNR) is also computed and used as a tie-breaker because it measures pixel-wise reconstruction quality in logarithmic form. Therefore, when two checkpoints achieve validation SSIM values within the configured tolerance, PSNR is used to select the best checkpoint for that run.
 
-For the remaining datasets, no additional train or validation partitions are created. Instead, all available samples are assigned to a single evaluation partition. For datasets that already provide predefined splits, such as LOL-v1 and MILLs, the original partitions are merged into a unified test set. ExDark is likewise converted into a single test split, while preserving the original category labels as metadata.
+The output of this stage is a validation-based ranking of the explored configurations. This ranking is later parsed from the run logs and used to select the top-3 configurations for the multi-seed stage.
 
-The resulting split sizes are summarized in Table~\ref{tab:dataset_splits}.
+\subsection{Top-3 Multi-Seed Re-Training}
 
-\input{tab/dataset_splits}
+After the screening stage, the three most promising configurations are selected from the validation-based ranking and re-trained under the same training and validation protocol. This stage is necessary because the screening phase provides only a preliminary estimate of performance, obtained from a single training run for each configuration.
+
+The goal of the multi-seed stage is to obtain a more reliable comparison among the selected configurations. By repeating the training procedure several times for each of them, the protocol can evaluate whether its validation performance is consistent or mainly due to a favorable run.
+
+The outputs of this stage are aggregated validation metrics for each selected configuration. These aggregated results are then used for the final validation-based selection, while the test sets remain untouched.
+
+\subsection{Validation-Based Model Selection}
+
+The final configuration is selected only from the aggregated validation results of the multi-seed stage.
+
+The primary selection criterion is the mean validation SSIM across runs. In this case, where configurations obtain very close mean SSIM values, the selection favors the more stable configuration, measured by the standard deviation of validation SSIM. If the comparison is still ambiguous, mean validation PSNR is used as a final tie-breaker.
+
+This rule keeps the whole selection process validation-based, while also accounting for statistical robustness across repeated trainings.
+
+\subsection{Final Test Evaluation}
+
+The final test evaluation is performed only after the final configuration has been selected. The selected configuration is evaluated on the test set of all the datasets used in this project, and the resulting metrics are aggregated as mean and standard deviation. This ensures that the final evidence is not based on a single run, but reflects both average performance and statistical robustness.
+
+The evaluation protocol depends on whether a dataset is paired or unpaired. In paired datasets, ``full-reference'' metrics can be computed by comparing the enhanced output of the model with the corresponding target image of the dataset. In this work, paired datasets are evaluated using SSIM, PSNR, and mean absolute error (MAE). This last metric measures the average absolute pixel difference between the enhanced image and the reference image.
+
+``No-reference'' metrics do not require target images and are computed for both paired and unpaired datasets. In this work, the no-reference metrics are naturalness image quality evaluator (NIQE) and blind/referenceless image spatial quality evaluator (BRISQUE). More specifically, NIQE measures the deviation of an image from statistical properties commonly observed in natural images, while BRISQUE estimates perceptual quality from spatial scene statistics.
+
+Additional diagnostic metrics are computed on the model output for both paired and unpaired datasets. They are used to support the interpretation of failure modes, meaning recurring types of enhancement errors. These diagnostics include: (i) mean luminance, which measures the average brightness of the enhanced image; (ii) dark pixel ratio, which measures the fraction of pixels that remain very dark; (iii) bright clipping ratio, which measures the fraction of pixels close to saturation; (iv) luminance standard deviation, which provides a compact indication of contrast variation; (v) RGB channel imbalance, which helps detect color cast; and (vi) Laplacian sharpness, which provides a simple estimate of high-frequency content related to blur, noise, or halo artifacts.
+
+LOL-v1 and LOL-v2 are paired datasets and are therefore evaluated by aggregating full-reference metrics, no-reference metrics, and diagnostic output metrics over their respective test sets. ExDark and MILLs require a more specialized reporting protocol because of their particular dataset structure and evaluation objectives.
+
+For ExDark, which is unpaired, no normally exposed target image is available. Therefore, it is evaluated using only no-reference metrics and diagnostic output metrics. In addition to global results over the whole dataset, ExDark is also analyzed by object category, since its images are organized into semantic groups.
+
+MILLs is a paired dataset, so it is evaluated like LOL-v1 and LOL-v2, but the results are reported at two levels: globally over all samples and grouped by illumination level. This grouped reporting is useful because MILLs contains inputs acquired at different light intensities, making it possible to analyze how model performance changes across illumination levels.

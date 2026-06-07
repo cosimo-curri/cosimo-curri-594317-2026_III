@@ -1,8 +1,20 @@
 \section{End-to-End Pipeline}
 
-The experimental workflow is organized as a sequence of modular stages, in which each stage performs a specific task and produces outputs for the following stages, from the raw datasets to the final quantitative and qualitative evaluation. The planned pipeline consists of (i) manifest generation, (ii) offline preprocessing, (iii) model training, and (iv) model evaluation.
+\subsection{Overview of the Implemented Workflow}
 
-The only dataset-specific stage is manifest generation. Besides its natural role of organizing the data, this step is intentionally designed to convert datasets with different structures into a common format. As a result, the subsequent stages of the pipeline can operate on the same data representation without relying on the original organization of each dataset, making them effectively dataset-agnostic.
+The pipeline connects the datasets and splits discussed in Section~\ref{sec:datasets_and_splits} with the experimental protocol defined in Section~\ref{sec:experimental_protocol}. Its role is to transform raw datasets into a common representation and then use that representation to train, select, evaluate, and analyze the models in a reproducible way.
+
+The implemented workflow is organized into five main stages: (i) manifest generation, where raw dataset folders are converted into CSV manifests; (ii) offline preprocessing, where images are deterministically processed once, updated manifests are written, and dataset-level statistics are computed; (iii) experiment execution, where configuration files are expanded into concrete runs and the framework performs online data augmentation, training, validation-based model selection, checkpointing, logging, and optional test evaluation; (iv) log parsing and aggregation, where the resulting JSONL logs are used to build rankings and aggregate validation or test metrics; and (v) qualitative example export, where selected checkpoints are restored to produce visual examples for inspection.
+
+Figure~\ref{fig:pipeline} summarizes the implemented workflow and shows how the dataset preparation stages are connected to experiment execution, log aggregation, and qualitative analysis.
+
+\input{fig/pipeline/pipeline}
+
+``Offline'' preprocessing and ``online'' augmentation serve different purposes in the pipeline. Offline preprocessing consists of deterministic operations that are performed once before training, saved on disk, and kept fixed across experiments. Online augmentation is instead applied at training time, when samples are loaded from the training split, and has a stochastic nature because the transformations are randomly sampled during training. In the current configuration, geometric augmentations are applied consistently to both the low-light input and the paired target, while photometric perturbations are applied only to the input image. This preserves the alignment of paired samples while exposing the model to additional low-light variations.
+
+The pipeline follows a central design principle of the project: only the manifest generation stage is intentionally dataset-specific. This stage absorbs the differences between the original dataset structures, such as pairing rules, filename conventions, category folders, and illumination-level metadata. Once each dataset has been converted into the CSV manifest format, the following stages of the pipeline operate on the same representation and do not need to know how each dataset was originally organized on disk.
+
+The following subsections describe these stages in more detail, showing how each part of the pipeline is implemented in the codebase.
 
 \subsection{Manifest Generation}
 
@@ -14,30 +26,44 @@ For this reason, manifest generation is the only intentionally dataset-specific 
 
 The output of this step is a CSV manifest file for each dataset, with a fixed column structure. This common format is what makes the later stages dataset-agnostic: once the manifests have been created, preprocessing, training, and evaluation only need to read the paths and metadata stored in the CSV files, without knowing how the original dataset was arranged on disk.
 
-The manifest generation script also supports reproducibility-oriented choices. When a dataset does not provide an explicit validation set, a validation split can be sampled from the training split using a fixed random seed. Moreover, the generated rows are sorted according to the split and image path, making the row order deterministic across runs.
+The manifest generation script also supports reproducibility-oriented choices. When required by the protocol and when a training split is available, a validation split can be sampled from the training split using a fixed random seed. Moreover, the generated rows are sorted according to the split and image path, making the row order deterministic across runs.
+
+The same manifest information is also useful during evaluation. For ExDark, the object category associated with each image makes it possible to report results not only globally, but also separately for each category. For MILLs, the illumination level associated with each image makes it possible to report results both over the whole dataset and separately for each illumination level. In this way, the evaluation can remain general while still preserving the specific information needed for each dataset.
 
 \subsection{Offline Preprocessing}
 
-After manifest generation, all datasets are processed by a common offline preprocessing script. This stage is called ``offline'' because it contains deterministic preliminary operations, that are performed once rather than repeatedly during training. The processed images are stored on disk and are then used by both the training and evaluation stages.
+After manifest generation, all datasets are processed by an offline preprocessing script. This stage is called ``offline'' because it contains deterministic preliminary operations that are performed once for all the experiments of this project rather than repeatedly during training or evaluation. The processed images are stored on disk and are then used by all later stages of the pipeline.
 
-The script reads the CSV manifests produced in the previous stage of the pipeline and creates a preprocessed version of each dataset on disk. For each dataset, it also writes a new CSV manifest with the same columns as the original one, but with paths updated to the preprocessed images.
+The script reads the CSV manifests produced in the previous stage and creates a preprocessed version of each dataset on disk. For each dataset, it also writes a new CSV manifest with the same columns as the original one, but with paths updated to the preprocessed images. The output paths preserve the dataset-relative folder structure of the original files, while the image extension is replaced according to the selected output format.
 
-Each image undergoes the following deterministic operations: (i) loading with EXIF orientation applied when available, (ii) conversion to RGB, (iii) resizing to $256 \times 256$ using Lanczos interpolation to estimate pixel values from neighboring pixels, and (iv) saving in PNG format. Applying the EXIF orientation avoids processing photographs with an incorrect rotation.
+Each image undergoes the following deterministic operations: (i) loading with EXIF orientation applied when available, (ii) conversion to RGB, (iii) resizing to $256 \times 256$ using Lanczos interpolation, and (iv) saving in PNG format. Applying the EXIF orientation avoids processing photographs with an incorrect rotation. PNG is used to avoid introducing additional compression artifacts during preprocessing. If the same source image is referenced more than once in a manifest, it is processed only once and then reused, avoiding possible duplicated work.
 
-A fixed resizing strategy is used instead of cropping. In this project, preserving the whole scene during preprocessing was considered preferable to selecting a local region, because cropping would permanently discard part of the image and could remove relevant low-light regions, light sources, objects, or failure cases needed for cross-dataset analysis. Although resizing may slightly distort the aspect ratio of some images, it keeps the full scene and maintains a fixed deterministic input size for all datasets. Random crops and other data augmentation operations are therefore left to the training stage, where they can be applied only to the training split.
+A fixed resizing strategy is used instead of cropping. In this project, preserving the whole scene during preprocessing was considered preferable to selecting a local region, because a crop would permanently discard part of the image and could remove relevant low-light regions, light sources, or objects needed for cross-dataset analysis. Although resizing may slightly distort the aspect ratio of some images, it keeps the full scene and provides a fixed deterministic input size for all datasets. This choice does not exclude the use of cropping as online data augmentation during training: unlike offline cropping, random resized crops are stochastic, do not permanently modify the preprocessed dataset, and are applied only to the training split, while validation and test images remain deterministic.
 
 Before processing a manifest, the script performs a lightweight consistency check. It verifies that no input path is duplicated within the same split and that the same input path does not appear in different splits. These checks are intentionally limited, since the dataset-specific pairing rules have already been handled during manifest generation.
 
-The script also computes simple dataset-level statistics before applying the final resize. For each image of size ${H \times W}$, a luminance map $Y \in [0,1]^{H \times W}$ is computed from the RGB channels using the ITU-R BT.709 luma coefficients:
+In addition to producing the preprocessed images and updated manifests, the script computes simple dataset-level statistics. These statistics are computed before applying the final resize, after loading the image with the correct orientation and converting it to RGB. Therefore, they summarize the illumination properties of the original images rather than only the $256 \times 256$ images later used as model inputs.
+
+For each image of size $H \times W$, a luminance map $Y \in [0,1]^{H \times W}$ is computed from the RGB channels using the ITU-R BT.709 luma coefficients:
 \begin{equation}
 	Y_{i,j} = 0.2126R_{i,j} + 0.7152G_{i,j} + 0.0722B_{i,j},
 	\label{eq:luminance}
 \end{equation}
 where $R_{i,j}$, $G_{i,j}$, and $B_{i,j}$ are the RGB values of pixel $(i,j)$, scaled to $[0,1]$. Based on this luminance map, the dark pixel ratio is defined as
 \begin{equation}
-	\mathrm{DPR} = \frac{1}{HW}\sum_{i=1}^{H}\sum_{j=1}^{W} 1\left[Y_{i,j} < \tau_d\right], \quad \tau_d = 0.10
+	\mathrm{DPR} =
+	\frac{1}{HW}
+	\sum_{i=1}^{H}
+	\sum_{j=1}^{W}
+	1\left[Y_{i,j} < \tau_d\right],
+	\quad
+	\tau_d = 0.10,
 	\label{eq:dpr}
 \end{equation}
-where $H$ and $W$ are the image height and width respectively, $\tau_d$ is the dark-pixel threshold, and $1[\cdot]$ is the indicator function, that is equal to one when the condition is true and zero otherwise. For paired datasets, the same luminance statistics are also computed on the target images. These statistics are summarized in Table~\ref{tab:dataset_statistics} and provide a compact description of the illumination distribution of each dataset. The table shows that LOL-v1 and LOL-v2 Real have very similar input luminance distributions, supporting the use of LOL-v1 as a close cross-dataset benchmark for the main training domain. LOL-v2 Synthetic and MILLs are instead brighter on average, indicating a larger distribution shift in terms of illumination. ExDark lies between these cases in terms of input luminance and remains useful as an unpaired real-world stress test.
+where $H$ and $W$ are the image height and width respectively, $\tau_d$ is the dark-pixel threshold, and $1[\cdot]$ is the indicator function, equal to one when the condition is true and zero otherwise.
+
+For each dataset, the script records the number of samples, the median original input size, the mean and standard deviation of input luminance, and the average fraction of dark pixels. For paired datasets, the same luminance summary is also computed on the target images. These statistics are written to a dataset summary file and are reported in Table~\ref{tab:dataset_statistics}.
 
 \input{tab/dataset_statistics}
+
+The statistics in Table~\ref{tab:dataset_statistics} provide a compact description of the illumination distribution encountered by the preprocessing pipeline. LOL-v1 and LOL-v2 Real have very similar input luminance distributions, supporting the use of LOL-v1 as a close cross-dataset benchmark for the main training domain. LOL-v2 Synthetic and MILLs are instead brighter on average, indicating a larger distribution shift in terms of illumination. ExDark lies between these cases in terms of input luminance and remains useful as an unpaired real-world stress test.
