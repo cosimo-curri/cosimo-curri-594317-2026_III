@@ -1,0 +1,41 @@
+\section{U-Net Family}
+
+The first model family implemented in this project is U-Net~\cite{DBLP:conf/miccai/RonnebergerFB15}. In this work, U-Net is used as a configurable encoder-decoder architecture for paired low-light image enhancement. This choice naturally matches the image-to-image nature of the task: the model receives a low-light RGB image and must produce an enhanced RGB image at the corresponding spatial resolution. Although U-Net was originally introduced for biomedical image segmentation, its encoder-decoder structure with skip connections is also well suited to this setting, because it allows the model to combine global contextual information with the preservation of local image details. The corresponding grid search explores multiple configurations by varying both architectural and optimization choices.
+
+\subsection{Architecture}
+
+U-Net is an encoder-decoder architecture with skip connections. The encoder progressively reduces the spatial resolution of the image and extracts increasingly abstract features, while the decoder restores the spatial resolution and produces the enhanced RGB image. The deepest part of the network is called the bottleneck: it is the point where the feature maps have the lowest spatial resolution but the richest semantic representation. Skip connections transfer encoder features to decoder stages at matching resolutions, except at this bottleneck level, where no skip connection is needed. This helps the decoder recover spatial details that may be weakened during downsampling, while still using the contextual information extracted by the deeper layers.
+
+The implemented U-Net is built from repeated convolutional blocks. A convolutional layer learns local filters over the image or over intermediate feature maps. A feature map is an internal representation produced by the network: it can be seen as a set of channels that store the patterns detected at a given layer, such as edges, textures, colors, or more abstract structures. In this implementation, each block applies two convolutional layers, and each convolution is followed by two possible operations: normalization, when enabled, and a non-linear activation function.
+
+In each convolutional block, the convolutions use a $3 \times 3$ kernel with padding equal to one. This choice preserves the spatial resolution inside the block, so that feature maps are not progressively reduced by the convolutions themselves. Spatial resolution changes are therefore confined to the explicit downsampling and upsampling stages. This is useful for paired image enhancement, where preserving spatial correspondence between the prediction and the reference target is important for pixel-wise supervision.
+
+The normalization layer is optional, and different normalization strategies are part of the search space. Normalization can make training more stable by controlling the distribution of intermediate feature values. The activation function is instead kept fixed to leaky rectified linear unit (LeakyReLU) in the U-Net experiments. This function plays the same general role as a standard rectified linear unit (ReLU), because it introduces non-linearity and allows the network to learn transformations that are more complex than a simple linear filter. However, unlike ReLU, it does not completely suppress negative activations, but keeps a small non-zero response for them. This choice was preferred to reduce the risk of inactive units and to maintain a more stable gradient flow during training.
+
+Downsampling is performed with $2 \times 2$ max pooling followed by a convolutional block. Max pooling reduces the spatial size of the feature maps, allowing deeper layers to process a larger image context. Upsampling is performed either with bilinear interpolation or with transposed convolution, depending on the configuration. Bilinear interpolation is a fixed, non-learnable resizing operation. Transposed convolution is instead learnable, so the model can adapt how feature maps are upsampled.
+
+The final layer is a $1 \times 1$ convolution followed by a sigmoid function. The $1 \times 1$ convolution maps the decoder features to the three RGB output channels. The sigmoid function constrains the output values to the $[0,1]$ range, matching the normalized image representation used throughout the pipeline.
+
+\subsection{Training Objective and Grid Search}
+
+The U-Net family follows the general experimental protocol described in Section~\ref{sec:experimental_protocol}. For this family, training uses a combined L1-SSIM objective. The L1 term penalizes pixel-wise differences between the enhanced output and the reference image, using the MAE defined in Eq.~\ref{eq:mae}. The structural term is implemented as an SSIM-based penalty, using the SSIM definition in Eq.~\ref{eq:ssim}. Since SSIM is a similarity score to maximize, it is converted into a loss term by using $1 - \mathrm{SSIM}$, which becomes smaller when the prediction is structurally closer to the reference image. The loss is defined as
+\begin{equation}
+	\mathcal{L}(\hat{I}, I)
+	=
+	0.8 \, \mathrm{MAE}(\hat{I}, I)
+	+
+	0.2 \, \bigl(1 - \mathrm{SSIM}(\hat{I}, I)\bigr),
+\end{equation}
+where $\hat{I}$ is the enhanced output and $I$ is the reference image. The two coefficients are configurable in the experiment file, but they are kept fixed in the grid search.
+
+The grid search defined for this family explores a set of architectural and optimization choices, reported in Table~\ref{tab:unet_grid_search}. The architectural part of the grid varies the channel schedule, the normalization strategy, and the upsampling method. The channel schedule specifies how many feature channels are used at each resolution level of the U-Net. As the encoder goes deeper, the spatial resolution decreases and the number of channels usually increases, allowing the network to represent progressively richer features. Therefore, a smaller channel schedule defines a lighter model with fewer parameters, while a larger schedule increases model capacity at the cost of higher computational complexity.
+
+The normalization choice determines how intermediate feature activations are normalized inside the convolutional blocks. The search compares no normalization, batch normalization, instance normalization, and group normalization. These alternatives differ in the statistics used for normalization, respectively relying on mini-batch statistics, per-image statistics, or groups of channels. For group normalization, the number of groups is fixed and is not part of the grid.
+
+The upsampling method controls how decoder feature maps are brought back to higher spatial resolutions. Transposed convolution is a learnable upsampling operation and represents a standard choice in encoder-decoder architectures. However, as discussed by Odena et al. in \emph{Deconvolution and Checkerboard Artifacts}~\cite{odena2016deconvolution}, learned upsampling operators such as transposed convolutions may introduce visible periodic artifacts when not properly controlled. For this reason, the grid also includes bilinear interpolation, which performs a fixed non-learnable resize before the following convolutional block. This alternative is less flexible, but provides a simpler upsampling mechanism and can reduce the risk of upsampling artifacts.
+
+Finally, the grid varies two optimization hyperparameters: the learning rate and the weight decay. The learning rate controls the magnitude of the optimizer updates, while weight decay acts as a regularization term on the model weights.
+
+\input{tab/unet_grid_search}
+
+Combining these choices gives 144 U-Net configurations in the single-seed screening stage.

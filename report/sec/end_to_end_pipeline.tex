@@ -1,10 +1,8 @@
 \section{End-to-End Pipeline}
 
-\subsection{Overview of the Implemented Workflow}
-
 The pipeline connects the datasets and splits discussed in Section~\ref{sec:datasets_and_splits} with the experimental protocol defined in Section~\ref{sec:experimental_protocol}. Its role is to transform raw datasets into a common representation and then use that representation to train, select, evaluate, and analyze the models in a reproducible way.
 
-The implemented workflow is organized into five main stages: (i) manifest generation, where raw dataset folders are converted into CSV manifests; (ii) offline preprocessing, where images are deterministically processed once, updated manifests are written, and dataset-level statistics are computed; (iii) experiment execution, where configuration files are expanded into concrete runs and the framework performs online data augmentation, training, validation-based model selection, checkpointing, logging, and optional test evaluation; (iv) log parsing and aggregation, where the resulting JSONL logs are used to build rankings and aggregate validation or test metrics; and (v) qualitative example export, where selected checkpoints are restored to produce visual examples for inspection.
+The implemented workflow is organized into five main stages: (i) manifest generation, where raw dataset folders are converted into comma-separated values (CSV) manifests; (ii) offline preprocessing, where images are deterministically processed once, updated manifests are written, and dataset-level statistics are computed; (iii) experiment execution, where configuration files are expanded into concrete runs and the framework performs online data augmentation, training, validation-based model selection, checkpointing, logging, and optional test evaluation; (iv) log parsing and aggregation, where the resulting JSON Lines (JSONL) logs are used to build rankings and aggregate validation or test metrics; and (v) qualitative example export, where selected checkpoints are restored to produce visual examples for inspection.
 
 Figure~\ref{fig:pipeline} summarizes the implemented workflow and shows how the dataset preparation stages are connected to experiment execution, log aggregation, and qualitative analysis.
 
@@ -17,6 +15,7 @@ The pipeline follows a central design principle of the project: only the manifes
 The following subsections describe these stages in more detail, showing how each part of the pipeline is implemented in the codebase.
 
 \subsection{Manifest Generation}
+\label{sec:manifest_generation}
 
 The purpose of the first stage of the pipeline is to scan the original dataset folders and build CSV manifest files from their structure. In each manifest, every row represents one image sample and stores the dataset name, the split to which the sample belongs, the path of the low-light input image, the path of the corresponding target image when available, and optional metadata such as the image category or the illumination level.
 
@@ -32,17 +31,21 @@ The same manifest information is also useful during evaluation. For ExDark, the 
 
 \subsection{Offline Preprocessing}
 
+\paragraph{Deterministic preprocessing.}
+
 After manifest generation, all datasets are processed by an offline preprocessing script. This stage is called ``offline'' because it contains deterministic preliminary operations that are performed once for all the experiments of this project rather than repeatedly during training or evaluation. The processed images are stored on disk and are then used by all later stages of the pipeline.
 
-The script reads the CSV manifests produced in the previous stage and creates a preprocessed version of each dataset on disk. For each dataset, it also writes a new CSV manifest with the same columns as the original one, but with paths updated to the preprocessed images. The output paths preserve the dataset-relative folder structure of the original files, while the image extension is replaced according to the selected output format.
+For each CSV manifest, the script first performs a lightweight consistency check. It verifies that no input path is duplicated within the same split and that the same input path does not appear in different splits. These checks are intentionally limited, since the dataset-specific pairing rules have already been handled during manifest generation.
 
-Each image undergoes the following deterministic operations: (i) loading with EXIF orientation applied when available, (ii) conversion to RGB, (iii) resizing to $256 \times 256$ using Lanczos interpolation, and (iv) saving in PNG format. Applying the EXIF orientation avoids processing photographs with an incorrect rotation. PNG is used to avoid introducing additional compression artifacts during preprocessing. If the same source image is referenced more than once in a manifest, it is processed only once and then reused, avoiding possible duplicated work.
+After these checks, the script creates a preprocessed version of each dataset on disk. For each dataset, it also writes a new CSV manifest with the same columns as the original one, but with paths updated to the preprocessed images. The output paths preserve the dataset-relative folder structure of the original files, while the image extension is replaced according to the selected output format.
+
+Each image undergoes the following deterministic operations: (i) loading with Exchangeable Image File Format (EXIF) orientation applied when available, (ii) conversion to RGB, (iii) resizing to $256 \times 256$ using Lanczos interpolation, and (iv) saving in Portable Network Graphics (PNG) format. Applying the EXIF orientation avoids processing photographs with an incorrect rotation. PNG is used to avoid introducing additional compression artifacts during preprocessing. If the same source image is referenced more than once in a manifest, it is processed only once and then reused, avoiding possible duplicated work.
 
 A fixed resizing strategy is used instead of cropping. In this project, preserving the whole scene during preprocessing was considered preferable to selecting a local region, because a crop would permanently discard part of the image and could remove relevant low-light regions, light sources, or objects needed for cross-dataset analysis. Although resizing may slightly distort the aspect ratio of some images, it keeps the full scene and provides a fixed deterministic input size for all datasets. This choice does not exclude the use of cropping as online data augmentation during training: unlike offline cropping, random resized crops are stochastic, do not permanently modify the preprocessed dataset, and are applied only to the training split, while validation and test images remain deterministic.
 
-Before processing a manifest, the script performs a lightweight consistency check. It verifies that no input path is duplicated within the same split and that the same input path does not appear in different splits. These checks are intentionally limited, since the dataset-specific pairing rules have already been handled during manifest generation.
+\paragraph{Dataset statistics.}
 
-In addition to producing the preprocessed images and updated manifests, the script computes simple dataset-level statistics. These statistics are computed before applying the final resize, after loading the image with the correct orientation and converting it to RGB. Therefore, they summarize the illumination properties of the original images rather than only the $256 \times 256$ images later used as model inputs.
+In addition to producing the preprocessed images and updated manifests, the script computes simple dataset-level statistics and writes them to a dedicated summary file. These statistics are computed before applying the final resize, after loading each image with the correct orientation and converting it to RGB. Therefore, they summarize the original image sizes and the illumination properties of the images before they are converted into the fixed $256 \times 256$ representation used as model input.
 
 For each image of size $H \times W$, a luminance map $Y \in [0,1]^{H \times W}$ is computed from the RGB channels using the ITU-R BT.709 luma coefficients:
 \begin{equation}
@@ -67,3 +70,163 @@ For each dataset, the script records the number of samples, the median original 
 \input{tab/dataset_statistics}
 
 The statistics in Table~\ref{tab:dataset_statistics} provide a compact description of the illumination distribution encountered by the preprocessing pipeline. LOL-v1 and LOL-v2 Real have very similar input luminance distributions, supporting the use of LOL-v1 as a close cross-dataset benchmark for the main training domain. LOL-v2 Synthetic and MILLs are instead brighter on average, indicating a larger distribution shift in terms of illumination. ExDark lies between these cases in terms of input luminance and remains useful as an unpaired real-world stress test.
+
+\subsection{Experiment Execution}
+\label{sec:experiment_execution}
+
+\paragraph{Run configuration.}
+
+After offline preprocessing, the third stage of the pipeline is experiment execution. This stage uses the preprocessed manifests to run the experiments required by the protocol. It is model-agnostic: the pipeline does not assume a specific architecture. Instead, each run is built from an experiment configuration, which specifies the model family, the training and validation manifests, the hyperparameters, the loss function, the online data augmentation policy, the early-stopping rule, and whether test evaluation should be executed.
+
+The experiment launcher expands the hyperparameter grid defined in the configuration and creates one resolved configuration for each combination of values, i.e., a set of configurations in which every grid parameter has been replaced by one concrete value. This makes it possible to describe a large set of experiments compactly.
+
+Each resolved configuration is assigned a configuration identifier. This identifier is computed from the part of the configuration that defines the model and its training setup, while run-specific or evaluation-specific fields are ignored. In this way, repeated runs of the same configuration, for example with different seeds, can be recognized and aggregated correctly.
+
+\paragraph{Training, data augmentation, and validation.}
+
+For each run, the framework builds the model, the loss function, the optimizer, and the data loaders from the resolved configuration. Model-specific details are isolated behind lightweight model-family wrappers, which define how the model and loss are constructed, how a batch is passed through the model, and how the model output is interpreted as a prediction. Training and validation samples are read from the preprocessed manifests, using the split field to distinguish the two partitions. Since at this point of the pipeline the input format is the same for all datasets, the execution stage no longer depends on the original dataset folder structure.
+
+Online data augmentation is also part of experiment execution. The augmentation policy is defined in the experiment configuration and can enable or disable each transformation and control its sampling behavior. In the current experimental protocol, however, this policy is kept fixed across runs, so that model configurations are compared under the same data variability.
+
+Augmentation is applied only to samples loaded from the training split. The framework explicitly prevents it from being enabled for validation or test splits, so validation and test metrics are always computed on deterministic preprocessed images. The augmentation pipeline is applied after reading the preprocessed RGB images and before converting them to tensors.
+
+The transformations are considered in a fixed order: (i) horizontal flipping, (ii) random resized cropping, (iii) color jitter, (iv) gamma jitter, and (v) additive synthetic sensor noise. When enabled, random resized cropping is applied to each training sample by randomly sampling the crop parameters. The other stochastic transformations are applied according to their configured probabilities. Therefore, a training sample does not always receive the full sequence of transformations: depending on the random decisions, different samples can undergo different combinations of augmentations. This creates a wide variety of possible augmented inputs while keeping the augmentation policy fixed across experiments.
+
+Each transformation has a specific role. Horizontal flipping exposes the model to mirrored versions of the same scene. Random resized cropping changes the visible region and slightly varies the scale of the content. Color jitter perturbs brightness, contrast, and saturation, while gamma jitter modifies the brightness curve of the input image, affecting dark and bright regions differently. Finally, synthetic sensor noise adds small random perturbations to simulate noisy low-light acquisitions.
+
+Horizontal flipping and random resized cropping are geometric transformations. They are applied consistently to both the low-light input and the paired target, using the same random decision and the same spatial parameters. This preserves the pixel-level alignment required by supervised training. Color jitter, gamma jitter, and synthetic sensor noise are photometric perturbations. They are applied only to the low-light input, because their purpose is to simulate additional low-light variability without modifying the reference image. This distinction allows the model to see a broader range of degraded inputs while keeping the target image as a stable normally exposed reference.
+
+Training is performed on paired samples. The model receives the low-light input image and predicts an enhanced RGB image. The loss function then compares this prediction with the corresponding reference image according to the objective specified in the configuration. At the configured validation interval, the framework evaluates the model on the validation split, computes the configured validation metrics, updates the early-stopping state, and stores the model state when a new best validation result is obtained.
+
+Before being passed to the model, training images are converted to tensors after online augmentation, while validation images are converted directly after loading because validation is not augmented. In both cases, image tensors have values in $[0,1]$. Therefore, the model inputs, the reference targets, the predictions, the paired losses, and the full-reference metrics all use the same normalized image range.
+
+For reproducibility, the paired quantities used during training and validation are defined below. Given a prediction $\hat{I}$ and a target image $I$, both with $C$ channels and spatial size $H \times W$, the MAE is computed as
+\begin{equation}
+	\mathrm{MAE}(\hat{I}, I)
+	=
+	\frac{1}{CHW}
+	\sum_{c=1}^{C}
+	\sum_{i=1}^{H}
+	\sum_{j=1}^{W}
+	\left|
+	\hat{I}_{c,i,j} - I_{c,i,j}
+	\right|.
+	\label{eq:mae}
+\end{equation}
+The same expression can also be used as an L1 loss term during training when selected by the configuration.
+
+SSIM measures the structural similarity between the prediction and the reference image. It compares local luminance, contrast, and structure using a local averaging window applied independently to each channel. For each local window, SSIM is defined as
+\begin{equation}
+	\mathrm{SSIM}(\hat{I}, I)
+	=
+	\frac{
+		(2\mu_{\hat{I}}\mu_I + C_1)
+		(2\sigma_{\hat{I}I} + C_2)
+	}{
+		(\mu_{\hat{I}}^2 + \mu_I^2 + C_1)
+		(\sigma_{\hat{I}}^2 + \sigma_I^2 + C_2)
+	},
+	\label{eq:ssim}
+\end{equation}
+%where $\mu_{\hat{I}}$ and $\mu_I$ are the local means, and $\sigma_{\hat{I}}^2$ and $\sigma_I^2$ are the local variances of the prediction $\hat{I}$ and the reference image $I$, respectively; $\sigma_{\hat{I}I}$ is their local covariance. The final SSIM value is obtained by averaging the local SSIM values over all spatial positions and channels.
+
+PSNR is computed from the mean squared error (MSE). The MSE is defined as
+\begin{equation}
+	\mathrm{MSE}(\hat{I}, I)
+	=
+	\frac{1}{CHW}
+	\sum_{c=1}^{C}
+	\sum_{i=1}^{H}
+	\sum_{j=1}^{W}
+	\left(
+	\hat{I}_{c,i,j} - I_{c,i,j}
+	\right)^2,
+	\label{eq:mse}
+\end{equation}
+and PSNR is then computed as
+\begin{equation}
+	\mathrm{PSNR}(\hat{I}, I)
+	=
+	10 \log_{10}
+	\left(
+	\frac{1}{\max(\mathrm{MSE}(\hat{I}, I), 10^{-10})}
+	\right).
+	\label{eq:psnr}
+\end{equation}
+The small lower bound inside the maximum avoids numerical instability when the MSE is extremely close to zero.
+
+During validation, the framework computes the loss and the full-reference metrics on the validation split. No-reference and diagnostic metrics are skipped at this stage, because they are not used for checkpoint selection and would make the validation loop heavier.
+
+Early stopping is configured in a model-agnostic way. The framework monitors a primary validation metric and can use a secondary validation metric as a tie-breaker when the primary metric changes by less than the configured tolerance. When the number of consecutive non-improving validation steps reaches the patience value, training stops.
+
+Mixed precision is controlled by the experiment configuration. When enabled, it allows some training computations to use lower numerical precision, which can reduce memory usage and improve speed. This option is used only when a CUDA device, namely an NVIDIA graphics processing unit (GPU), is available. In that case, the framework also uses a gradient scaler: it temporarily multiplies the loss by a scaling factor before backpropagation, so that very small gradients are easier to represent in lower precision, and then scales the gradients back before the optimizer updates the model weights. This helps reduce numerical instability while still benefiting from mixed precision. If mixed precision is disabled or CUDA is not available, training is performed in standard precision.
+
+\paragraph{Logging and checkpointing.}
+
+For each run, the framework writes a JSONL log, in which every line is a separate JSON object. Each resolved run is written to a separate JSONL file inside an experiment-specific log directory, so that later parsing scripts can process runs independently and aggregate them by configuration. This format is useful because later parsers can read the logs line by line and extract only the events needed for ranking, aggregation, or reporting. The first log event stores general information about the run, including the resolved configuration, the random seed, the device, the checkpoint location, and the total number of model parameters. More specifically, the number of parameters is computed as the sum of all tensor elements in the model parameters, and it can later be used to compare configurations not only in terms of validation performance, but also in terms of model size.
+
+Each run also saves a checkpoint containing both the model weights and the additional information needed to resume or reuse the run. This file includes the current and best validation model weights, optimizer information, the mixed-precision scaler when applicable, training and early-stopping information, random generator states, and the resolved configuration. Therefore, the same checkpoint can be used to resume training, restore the best validation model for test evaluation, or export qualitative examples.
+
+\paragraph{Test evaluation.}
+
+When test evaluation is enabled in the experiment configuration file, it is also executed inside this stage of the pipeline. Before evaluation starts, the framework restores the best model state selected on the validation set by early stopping.
+
+The evaluator loops over the configured test manifests and computes global metrics over all samples. If the manifest contains a grouping field requested by the configuration, the evaluator also computes grouped metrics. This is how the same evaluation code supports category-level reporting for ExDark and illumination-level reporting for MILLs.
+
+The evaluator automatically adapts to paired and unpaired datasets. If a target image is available in the preprocessed CSV manifest, full-reference metrics are computed. These include SSIM, PSNR, and MAE. If the target path is empty, full-reference metrics are skipped. No-reference metrics and diagnostic metrics are computed only from the enhanced output image and can therefore be used for both paired and unpaired datasets.
+
+The no-reference metrics NIQE and BRISQUE are not implemented explicitly. They are computed through the \texttt{pyiqa} library, using the corresponding metric objects provided by the library.
+
+Diagnostic metrics are computed on the enhanced output $\hat{I}$. The output luminance map $\hat{Y}$ is computed with the same BT.709 definition introduced during offline preprocessing in Eq.~\ref{eq:luminance}, but it is applied to the model output rather than to the original input image. From this map, the framework derives three output-level summaries: mean luminance, luminance standard deviation, and dark pixel ratio. Mean luminance and dark pixel ratio help detect residual darkness or excessive brightening, while luminance standard deviation provides a compact indication of contrast variation. The dark pixel ratio uses the same threshold-based definition in Eq.~\ref{eq:dpr}, again applied to $\hat{Y}$.
+
+The bright clipping ratio is used to detect possible over-exposure. It measures the fraction of pixels for which at least one RGB channel is close to saturation:
+\begin{equation}
+	\mathrm{BCR}
+	=
+	\frac{1}{HW}
+	\sum_{i=1}^{H}
+	\sum_{j=1}^{W}
+	1
+	\left[
+	\max_{c \in \{R,G,B\}}
+	\hat{I}_{c,i,j} > 0.98
+	\right].
+	\label{eq:bcr}
+\end{equation}
+Together with mean luminance, this metric helps distinguish globally bright outputs from outputs that contain localized saturated regions.
+
+The RGB channel imbalance is used as a simple indicator of color cast. It compares the mean values of the three output channels and measures the gap between the largest and smallest one:
+\begin{equation}
+	\mathrm{RGBI}
+	=
+	\max_{c \in \{R,G,B\}} \mu_c
+	-
+	\min_{c \in \{R,G,B\}} \mu_c,
+	\label{eq:rgbi}
+\end{equation}
+where $\mu_c$ is the mean value of output channel $c$. A larger value indicates a stronger imbalance between color channels.
+
+Finally, Laplacian sharpness is used as a simple measure of high-frequency content in the enhanced output. The Laplacian filter highlights rapid changes in the luminance map, such as edges, fine details, noise, or halo artifacts. The metric is the variance of the image obtained after applying the Laplacian kernel:
+\begin{equation}
+	\mathrm{LS}
+	=
+	\mathrm{Var}(K * \hat{Y}),
+	\label{eq:laplacian_sharpness}
+\end{equation}
+where $*$ denotes convolution and
+\begin{equation}
+	K =
+	\begin{bmatrix}
+		0 & 1 & 0 \\
+		1 & -4 & 1 \\
+		0 & 1 & 0
+	\end{bmatrix}.
+	\label{eq:laplacian_kernel}
+\end{equation}
+A very low value may indicate over-smoothing or blur, especially when luminance standard deviation is also low. An unusually high value may indicate residual noise, overly sharp edges, or halo artifacts. For halo artifacts, this signal is interpreted together with bright clipping ratio, no-reference quality scores, and visual inspection near light sources and strong edges.
+
+During test evaluation, the framework also logs per-sample metric events. This is useful because global scores summarize average behavior, while individual sample records can later guide qualitative analysis and help identify potential failure cases.
+
+\subsection{Log Parsing and Aggregation}
+
+\subsection{Qualitative Example Export}

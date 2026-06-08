@@ -1,4 +1,4 @@
-\begin{thebibliography}{4}
+\begin{thebibliography}{9}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -10,6 +10,25 @@ Yuen~Peng Loh and Chee~Seng Chan.
 \newblock Getting to know low-light images with the exclusively dark dataset.
 \newblock \emph{Comput. Vis. Image Underst.}, 178:\penalty0 30--42, 2019.
 
+\bibitem[Mittal et~al.(2012)Mittal, Moorthy, and
+  Bovik]{DBLP:journals/tip/MittalMB12}
+Anish Mittal, Anush~Krishna Moorthy, and Alan~Conrad Bovik.
+\newblock No-reference image quality assessment in the spatial domain.
+\newblock \emph{{IEEE} Trans. Image Process.}, 21\penalty0 (12):\penalty0
+  4695--4708, 2012.
+
+\bibitem[Mittal et~al.(2013)Mittal, Soundararajan, and
+  Bovik]{DBLP:journals/spl/MittalSB13}
+Anish Mittal, Rajiv Soundararajan, and Alan~C. Bovik.
+\newblock Making a "completely blind" image quality analyzer.
+\newblock \emph{{IEEE} Signal Process. Lett.}, 20\penalty0 (3):\penalty0
+  209--212, 2013.
+
+\bibitem[Odena et~al.(2016)Odena, Dumoulin, and Olah]{odena2016deconvolution}
+Augustus Odena, Vincent Dumoulin, and Chris Olah.
+\newblock Deconvolution and checkerboard artifacts.
+\newblock \emph{Distill}, 2016.
+
 \bibitem[Pilligua et~al.(2025)Pilligua, Serrano{-}Lozano, Peng, Baldrich,
   Brown, and Vazquez{-}Corral]{DBLP:journals/corr/abs-2511-15496}
 Maria Pilligua, David Serrano{-}Lozano, Pai Peng, Ramon Baldrich, Michael~S.
@@ -17,6 +36,20 @@ Maria Pilligua, David Serrano{-}Lozano, Pai Peng, Ramon Baldrich, Michael~S.
 \newblock Evaluating low-light image enhancement across multiple intensity
   levels.
 \newblock \emph{CoRR}, abs/2511.15496, 2025.
+
+\bibitem[Ronneberger et~al.(2015)Ronneberger, Fischer, and
+  Brox]{DBLP:conf/miccai/RonnebergerFB15}
+Olaf Ronneberger, Philipp Fischer, and Thomas Brox.
+\newblock U-net: Convolutional networks for biomedical image segmentation.
+\newblock In \emph{{MICCAI} {(3)}}, pages 234--241. Springer, 2015.
+
+\bibitem[Wang et~al.(2004)Wang, Bovik, Sheikh, and
+  Simoncelli]{DBLP:journals/tip/WangBSS04}
+Zhou Wang, Alan~C. Bovik, Hamid~R. Sheikh, and Eero~P. Simoncelli.
+\newblock Image quality assessment: from error visibility to structural
+  similarity.
+\newblock \emph{{IEEE} Trans. Image Process.}, 13\penalty0 (4):\penalty0
+  600--612, 2004.
 
 \bibitem[Wei et~al.(2018)Wei, Wang, Yang, and Liu]{DBLP:conf/bmvc/WeiWY018}
 Chen Wei, Wenjing Wang, Wenhan Yang, and Jiaying Liu.

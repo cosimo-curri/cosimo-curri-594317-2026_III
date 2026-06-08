@@ -1,0 +1,16 @@
+\begin{table*}[t]
+	\centering
+	\caption{Hyperparameters explored in the U-Net grid search.}
+	\label{tab:unet_grid_search}
+	\begin{tabular}{ll}
+		\toprule
+		Hyperparameter & Values \\
+		\midrule
+		Channel schedule & $(16,32,64,128)$, $(32,64,128,256)$, $(32,64,128,256,512)$ \\
+		Normalization & None, batch, instance, group \\
+		Upsampling & Bilinear, transposed \\
+		Learning rate & $3\cdot10^{-4}$, $5\cdot10^{-4}$, $10^{-3}$ \\
+		Weight decay & $0$, $10^{-4}$ \\
+		\bottomrule
+	\end{tabular}
+\end{table*}
