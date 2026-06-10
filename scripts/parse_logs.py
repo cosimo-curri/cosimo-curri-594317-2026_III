@@ -8,6 +8,7 @@ from bootstrap import add_project_root_to_path
 
 add_project_root_to_path()
 
+from src.low_light_enhancement.parsing.multi_seed import run_multi_seed_parsing
 from src.low_light_enhancement.parsing.screening import run_screening_parsing
 
 
@@ -15,6 +16,7 @@ from src.low_light_enhancement.parsing.screening import run_screening_parsing
 ParsingFunction = Callable[[Path, str], None]
 
 PARSING_MODES: dict[str, ParsingFunction] = {
+    "multi_seed": run_multi_seed_parsing,
     "screening": run_screening_parsing
 }
 
@@ -40,7 +42,7 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument(
         "--csv-name",
-        default="screening_ranking.csv",
+        default="parsed_logs.csv",
         help="Name of the CSV file written inside parsed_logs/."
     )
 

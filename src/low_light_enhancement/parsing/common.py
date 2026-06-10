@@ -13,8 +13,38 @@ from src.low_light_enhancement.framework.io import (
 
 PARSED_LOGS_DIR = Path("parsed_logs")
 
+CONFIG_COLUMNS = [
+    "config_id",
+    "experiment_name",
+    "seed",
+    "model_name",
+    "channels",
+    "normalization",
+    "activation",
+    "group_count",
+    "upsampling",
+    "lr",
+    "weight_decay",
+    "loss_name",
+    "l1_weight",
+    "ssim_weight",
+    "epochs",
+    "validation_rate",
+    "batch_size",
+    "num_workers",
+    "mixed_precision",
+    "deterministic",
+    "monitor",
+    "mode_monitor",
+    "min_delta",
+    "patience",
+    "tie_breaker",
+    "mode_tie_breaker"
+]
 
-@dataclass  # dataclasses keep simple data containers concise (no __init__, etc.)
+
+# Dataclasses keep simple data containers concise (no __init__, etc.)
+@dataclass
 class ParsedRun:
     log_path: Path
     events_by_name: dict[str, list[dict[str, Any]]]
@@ -71,17 +101,6 @@ def format_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     ]
 
 
-def flatten_metrics(
-    metrics: dict[str, Any],
-    *,  # next options are keyword-only
-    prefix: str
-) -> dict[str, Any]:
-    return {
-        f"{prefix}_{metric_name}": value
-        for metric_name, value in sorted(metrics.items())
-    }
-
-
 def metric_sort_value(value: Any, mode: str) -> float:
     value = float(value)
 
@@ -94,26 +113,57 @@ def metric_sort_value(value: Any, mode: str) -> float:
     raise ValueError(f"Unsupported metric mode: {mode!r}.")
 
 
-def build_fieldnames(
-    rows: list[dict[str, Any]],
-    preferred_columns: list[str]
-) -> list[str]:
-    all_columns = set().union(*(row.keys() for row in rows))
+def extract_config_fields(
+    run_start: dict[str, Any],
+    *,  # next options are keyword-only
+    include_seed: bool
+) -> dict[str, Any]:
+    config = run_start["resolved_config"]
 
-    ordered_columns = [
-        column
-        for column in preferred_columns
-        if column in all_columns
-    ]
+    model_config = config["model"]
+    optimizer_config = config["optimizer"]
+    loss_config = config["loss"]
+    training_config = config["training"]
+    early_stopping_config = config["early_stopping"]
 
-    extra_columns = sorted(all_columns - set(ordered_columns))
-    return ordered_columns + extra_columns
+    row = {
+        "config_id": run_start["config_id"],
+        "experiment_name": run_start["experiment_name"],
+        "model_name": model_config["name"],
+        "channels": model_config["channels"],
+        "normalization": model_config["normalization"],
+        "activation": model_config["activation"],
+        "group_count": model_config["group_count"],
+        "upsampling": model_config["upsampling"],
+        "lr": optimizer_config["lr"],
+        "weight_decay": optimizer_config["weight_decay"],
+        "loss_name": loss_config["name"],
+        "l1_weight": loss_config["l1_weight"],
+        "ssim_weight": loss_config["ssim_weight"],
+        "epochs": training_config["epochs"],
+        "validation_rate": training_config["validation_rate"],
+        "batch_size": training_config["batch_size"],
+        "num_workers": training_config["num_workers"],
+        "mixed_precision": training_config["mixed_precision"],
+        "deterministic": training_config["deterministic"],
+        "monitor": early_stopping_config["monitor"],
+        "mode_monitor": early_stopping_config["mode_monitor"],
+        "min_delta": early_stopping_config["min_delta"],
+        "patience": early_stopping_config["patience"],
+        "tie_breaker": early_stopping_config["tie_breaker"],
+        "mode_tie_breaker": early_stopping_config["mode_tie_breaker"]
+    }
+
+    if include_seed:
+        row["seed"] = run_start["seed"]
+
+    return row
 
 
 def write_parsed_csv(
     output_path: Path,
     rows: list[dict[str, Any]],
-    fieldnames: list[str],
+    fieldnames: list[str]
 ) -> None:
     write_csv_rows(
         output_path=output_path,
