@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import json
 from pathlib import Path
 from typing import Any, TYPE_CHECKING
 
@@ -15,6 +16,16 @@ if TYPE_CHECKING:
 def load_config(config_path: Path) -> dict[str, Any]:
     with config_path.open("r", encoding="utf-8") as f:
         return yaml.safe_load(f)
+
+
+def read_json(json_path: Path) -> Any:
+    with json_path.open("r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def read_jsonl_rows(jsonl_path: Path) -> list[dict[str, Any]]:
+    with jsonl_path.open("r", encoding="utf-8") as f:
+        return [json.loads(line) for line in f if line.strip()]
 
 
 def relative_path(path: Path) -> str:
@@ -32,7 +43,7 @@ def read_csv_rows(csv_path: Path) -> tuple[list[dict[str, str]], list[str]]:
 
 def write_csv_rows(
     output_path: Path,
-    rows: list[dict[str, str]],
+    rows: list[dict[str, Any]],
     fieldnames: list[str]
 ) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)

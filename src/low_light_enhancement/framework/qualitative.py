@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
 
@@ -10,7 +9,8 @@ from PIL import Image
 from src.low_light_enhancement.framework.checkpointing import load_checkpoint
 from src.low_light_enhancement.framework.io import (
     read_csv_rows,
-    read_image_tensor
+    read_image_tensor,
+    read_json
 )
 from src.low_light_enhancement.framework.registry import build_model_wrapper
 from src.low_light_enhancement.framework.torch_utils import get_device
@@ -34,7 +34,11 @@ class QualitativeExporter:
 
         self.config = self.checkpoint["resolved_config"]
         self.wrapper = build_model_wrapper(self.config["model"]["name"])
-        self.model = self.wrapper.build_model(self.config["model"]).to(self.device)
+
+        self.model = self.wrapper.build_model(
+            self.config["model"]
+        ).to(self.device)
+
         self.model.load_state_dict(self.checkpoint["best_model_state_dict"])
         self.model.eval()
 
@@ -87,8 +91,7 @@ class QualitativeExporter:
 
 
 def load_candidates(candidates_path: Path) -> list[dict[str, Any]]:
-    with candidates_path.open("r", encoding="utf-8") as f:
-        return json.load(f)
+    return read_json(candidates_path)
 
 
 def build_manifest_row_index(
