@@ -59,7 +59,7 @@ def sort_screening_records(
     records: list[ScreeningRecord]
 ) -> list[ScreeningRecord]:
     first_row = records[0].row
-    
+
     monitor = first_row["monitor"]
     tie_breaker = first_row["tie_breaker"]
     mode_monitor = first_row["mode_monitor"]
@@ -94,12 +94,12 @@ def rank_screening_records(
     return ranked_records
 
 
-def run_screening_parsing(logs_dir: Path, csv_name: str) -> None:
+def run_screening_parsing(logs_dir: Path, output_name: str) -> None:
     runs = load_runs(logs_dir)
     records = [build_screening_record(run) for run in runs]
     records = rank_screening_records(sort_screening_records(records))
     rows = [record.row for record in records]
-    csv_path = build_csv_path(csv_name)
+    csv_path = build_csv_path(output_name)
 
     write_parsed_csv(
         output_path=csv_path,

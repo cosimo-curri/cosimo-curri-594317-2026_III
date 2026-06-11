@@ -8,14 +8,26 @@ from bootstrap import add_project_root_to_path
 
 add_project_root_to_path()
 
-from src.low_light_enhancement.parsing.multi_seed import run_multi_seed_parsing
-from src.low_light_enhancement.parsing.screening import run_screening_parsing
+from src.low_light_enhancement.parsing.failure_candidates import (
+    run_failure_candidates_parsing
+)
+from src.low_light_enhancement.parsing.final_eval import (
+    run_final_eval_parsing
+)
+from src.low_light_enhancement.parsing.multi_seed import (
+    run_multi_seed_parsing
+)
+from src.low_light_enhancement.parsing.screening import (
+    run_screening_parsing
+)
 
 
-# Each parsing function receives the logs directory and the output CSV name
+# Each parsing function receives the logs directory and the output file name
 ParsingFunction = Callable[[Path, str], None]
 
 PARSING_MODES: dict[str, ParsingFunction] = {
+    "failure_candidates": run_failure_candidates_parsing,
+    "final_eval": run_final_eval_parsing,
     "multi_seed": run_multi_seed_parsing,
     "screening": run_screening_parsing
 }
@@ -23,7 +35,7 @@ PARSING_MODES: dict[str, ParsingFunction] = {
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Parse JSONL experiment logs and export a CSV file."
+        description="Parse JSONL experiment logs and export parsed artifacts."
     )
 
     parser.add_argument(
@@ -41,9 +53,9 @@ def parse_args() -> argparse.Namespace:
     )
 
     parser.add_argument(
-        "--csv-name",
-        default="parsed_logs.csv",
-        help="Name of the CSV file written inside parsed_logs/."
+        "--output-name",
+        required=True,
+        help="Name of the output file written inside parsed_logs/."
     )
 
     return parser.parse_args()
@@ -53,10 +65,7 @@ def main() -> None:
     args = parse_args()
     parsing_function = PARSING_MODES[args.parsing_mode]
 
-    parsing_function(
-        logs_dir=args.logs_dir,
-        csv_name=args.csv_name
-    )
+    parsing_function(args.logs_dir, args.output_name)
 
 
 if __name__ == "__main__":

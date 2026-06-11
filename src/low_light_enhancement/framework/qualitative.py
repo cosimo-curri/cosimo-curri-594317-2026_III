@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any
 
 import torch
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 
 from src.low_light_enhancement.framework.checkpointing import load_checkpoint
 from src.low_light_enhancement.framework.io import (
@@ -73,21 +73,27 @@ class QualitativeExporter:
         output_path.mkdir(parents=True, exist_ok=True)
 
         prefix = build_output_prefix(index, row)
-        input_image = tensor_to_image(input_tensor)
-        output_image = tensor_to_image(prediction)
 
-        input_image.save(output_path / f"{prefix}_input.png")
-        output_image.save(output_path / f"{prefix}_output.png")
+        panel_images = [
+            tensor_to_image(input_tensor),
+            tensor_to_image(prediction)
+        ]
 
-        panel_images = [input_image, output_image]
+        panel_labels = ["Input", "Output"]
 
-        if row["target_path"]:
-            target_tensor = read_image_tensor(Path(row["target_path"]))
-            target_image = tensor_to_image(target_tensor)
-            target_image.save(output_path / f"{prefix}_target.png")
-            panel_images.append(target_image)
+        target_path = row.get("target_path")
 
-        make_panel(panel_images).save(output_path / f"{prefix}_panel.png")
+        if target_path:
+            target_tensor = read_image_tensor(Path(target_path))
+            panel_images.append(tensor_to_image(target_tensor))
+            panel_labels.append("Target")
+
+        panel = make_panel(
+            images=panel_images,
+            labels=panel_labels
+        )
+
+        panel.save(output_path / f"{prefix}_panel.png")
 
 
 def load_candidates(candidates_path: Path) -> list[dict[str, Any]]:
@@ -117,15 +123,59 @@ def build_output_prefix(index: int, row: dict[str, str]) -> str:
     return f"{index:04d}_{dataset}"
 
 
-def make_panel(images: list[Image.Image]) -> Image.Image:
+def make_panel(
+    images: list[Image.Image],
+    labels: list[str] | None = None
+) -> Image.Image:
     widths = [image.width for image in images]
     heights = [image.height for image in images]
 
-    panel = Image.new("RGB", (sum(widths), max(heights)))
+    label_height = 32 if labels is not None else 0
+
+    panel = Image.new(
+        "RGB",
+        (sum(widths), max(heights) + label_height),
+        "white"
+    )
+
     current_x = 0
 
-    for image in images:
-        panel.paste(image, (current_x, 0))
+    if labels is not None:
+        draw = ImageDraw.Draw(panel)
+        font = ImageFont.load_default()
+
+    for index, image in enumerate(images):
+        if labels is not None:
+            draw_centered_label(
+                draw=draw,
+                label=labels[index],
+                x=current_x,
+                width=image.width,
+                height=label_height,
+                font=font
+            )
+
+        panel.paste(image, (current_x, label_height))
         current_x += image.width
 
     return panel
+
+
+def draw_centered_label(
+    *,  # next options are keyword-only
+    draw: ImageDraw.ImageDraw,
+    label: str,
+    x: int,
+    width: int,
+    height: int,
+    font: ImageFont.ImageFont
+) -> None:
+    bbox = draw.textbbox((0, 0), label, font=font)
+
+    text_width = bbox[2] - bbox[0]
+    text_height = bbox[3] - bbox[1]
+
+    text_x = x + (width - text_width) // 2
+    text_y = (height - text_height) // 2
+
+    draw.text((text_x, text_y), label, fill="black", font=font)

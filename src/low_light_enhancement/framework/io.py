@@ -23,6 +23,14 @@ def read_json(json_path: Path) -> Any:
         return json.load(f)
 
 
+def write_json(output_path: Path, data: Any) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with output_path.open("w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+
+
 def read_jsonl_rows(jsonl_path: Path) -> list[dict[str, Any]]:
     with jsonl_path.open("r", encoding="utf-8") as f:
         return [json.loads(line) for line in f if line.strip()]

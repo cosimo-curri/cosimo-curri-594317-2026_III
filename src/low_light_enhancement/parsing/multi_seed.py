@@ -182,13 +182,13 @@ def rank_multi_seed_records(
     return ranked_records
 
 
-def run_multi_seed_parsing(logs_dir: Path, csv_name: str) -> None:
+def run_multi_seed_parsing(logs_dir: Path, output_name: str) -> None:
     runs = load_runs(logs_dir)
     run_records = [build_multi_seed_run_record(run) for run in runs]
     records = build_multi_seed_records(run_records)
     records = rank_multi_seed_records(sort_multi_seed_records(records))
     rows = [record.row for record in records]
-    csv_path = build_csv_path(csv_name)
+    csv_path = build_csv_path(output_name)
 
     write_parsed_csv(
         output_path=csv_path,
