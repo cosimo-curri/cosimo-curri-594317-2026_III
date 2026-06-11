@@ -1,16 +1,17 @@
 \begin{table}[t]
 	\centering
-	\caption{Dataset split sizes used in the pipeline. Counts refer to samples, i.e., low-light input images. For paired datasets, each input sample is associated with a corresponding target image.}
+	\caption{Dataset split sizes used in the pipeline. The first row reports the main dataset, while the remaining rows report the datasets for the cross-dataset evaluation. Counts refer to samples, i.e., low-light input images. For paired datasets, each input sample is associated with a corresponding target image.}
 	\label{tab:dataset_splits}
 	\begin{tabular}{lccc}
 		\toprule
 		Dataset & Train & Validation & Test \\
 		\midrule
-		ExDark & -- & -- & 7363 \\
-		LOL-v1 & -- & -- & 500 \\
 		LOL-v2 Real & 620 & 69 & 100 \\
+		\midrule
 		LOL-v2 Synthetic & 810 & 90 & 100 \\
+		LOL-v1 & -- & -- & 500 \\
 		MILLs & -- & -- & 499 \\
+		ExDark & -- & -- & 7363 \\
 		\bottomrule
 	\end{tabular}
 \end{table}

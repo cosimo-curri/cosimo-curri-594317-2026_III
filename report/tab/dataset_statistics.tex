@@ -1,16 +1,17 @@
 \begin{table*}[t]
 	\centering
-	\caption{Dataset statistics computed during offline preprocessing, before applying the final resize. Luminance values are reported as mean $\pm$ standard deviation across samples. Dark pixels denote the average fraction of input pixels with luminance below $0.10$.}
+	\caption{Dataset statistics computed during offline preprocessing, before applying the final resize. The first row reports the main dataset, while the remaining rows report the datasets for the cross-dataset evaluation. Luminance values are reported as mean $\pm$ standard deviation across samples. Target luminance is not available for ExDark because it is unpaired.}
 	\label{tab:dataset_statistics}
 	\begin{tabular}{lccccc}
 		\toprule
-		Dataset & Samples & Median original size & Input luminance & Dark pixels & Target luminance \\
+		Dataset & Samples & Median original size & Input luminance & Dark pixels (\%) & Target luminance \\
 		\midrule
-		ExDark & 7363 & $640 \times 500$ & $0.143 \pm 0.086$ & $59.6\%$ & -- \\
-		LOL-v1 & 500 & $600 \times 400$ & $0.061 \pm 0.041$ & $82.7\%$ & $0.458 \pm 0.102$ \\
-		LOL-v2 Real & 789 & $600 \times 400$ & $0.062 \pm 0.042$ & $80.9\%$ & $0.436 \pm 0.105$ \\
-		LOL-v2 Synthetic & 1000 & $384 \times 384$ & $0.240 \pm 0.138$ & $46.7\%$ & $0.513 \pm 0.141$ \\
-		MILLs & 499 & $600 \times 400$ & $0.244 \pm 0.110$ & $16.4\%$ & $0.369 \pm 0.095$ \\
+		LOL-v2 Real & 789 & $600 \times 400$ & $0.062 \pm 0.042$ & $80.9$ & $0.436 \pm 0.105$ \\
+		\midrule
+		LOL-v2 Synthetic & 1000 & $384 \times 384$ & $0.240 \pm 0.138$ & $46.7$ & $0.513 \pm 0.141$ \\
+		LOL-v1 & 500 & $600 \times 400$ & $0.061 \pm 0.041$ & $82.7$ & $0.458 \pm 0.102$ \\
+		MILLs & 499 & $600 \times 400$ & $0.244 \pm 0.110$ & $16.4$ & $0.369 \pm 0.095$ \\
+		ExDark & 7363 & $640 \times 500$ & $0.143 \pm 0.086$ & $59.6$ & -- \\
 		\bottomrule
 	\end{tabular}
 \end{table*}

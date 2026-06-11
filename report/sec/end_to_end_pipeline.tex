@@ -69,7 +69,7 @@ For each dataset, the script records the number of samples, the median original 
 
 \input{tab/dataset_statistics}
 
-The statistics in Table~\ref{tab:dataset_statistics} provide a compact description of the illumination distribution encountered by the preprocessing pipeline. LOL-v1 and LOL-v2 Real have very similar input luminance distributions, supporting the use of LOL-v1 as a close cross-dataset benchmark for the main training domain. LOL-v2 Synthetic and MILLs are instead brighter on average, indicating a larger distribution shift in terms of illumination. ExDark lies between these cases in terms of input luminance and remains useful as an unpaired real-world stress test.
+The statistics provide a compact description of the illumination distribution encountered by the preprocessing pipeline. LOL-v1 and LOL-v2 Real have very similar input luminance distributions, supporting the use of LOL-v1 as a close cross-dataset benchmark for the main training domain. LOL-v2 Synthetic and MILLs are instead brighter on average, indicating a larger distribution shift in terms of illumination. ExDark lies between these cases in terms of input luminance and remains useful as an unpaired real-world stress test.
 
 \subsection{Experiment Execution}
 \label{sec:experiment_execution}
@@ -229,4 +229,14 @@ During test evaluation, the framework also logs per-sample metric events. This i
 
 \subsection{Log Parsing and Aggregation}
 
+After experiment execution, the pipeline converts the raw JSONL logs into structured CSV and JSON files. Each run produces a sequence of logged events and, although the JSONL format is convenient during training, it is not directly suitable for analysis because the information is distributed across many event records. Therefore, a dedicated parsing stage reads the logs and reorganizes the relevant information into CSV or JSON files, depending on the type of parsing.
+
+During single-seed screening, each run is summarized by its configuration, number of parameters, best validation epoch, and validation metrics. These summaries are ranked using the validation criterion defined by the experiment, so that the best configurations can be selected for the multi-seed stage. During multi-seed re-training, runs corresponding to the same configuration are grouped together, and the parser computes mean and standard deviation values across seeds, providing a final ranking. This makes it possible to compare configurations not only by average validation performance, but also by their stability.
+
+For final evaluation, the parser aggregates the test metrics of the selected configuration across repeated runs. Results are reported both at dataset level and, when available, at group level. More specifically, this allows the same reporting procedure to summarize global results for each test dataset, category-level results for ExDark, and illumination-level results for MILLs. The parsed table preserves full-reference metrics when a paired target is available, and contains only no-reference and diagnostic metrics when no target is provided.
+
+The parsing stage also supports the qualitative analysis. Per-sample evaluation records are first aggregated across repeated runs and then used to build candidate lists for good enhancements and for the main failure types considered in the report. These candidates are selected through metric-based scores computed within each dataset, so that examples are compared against samples from the same distribution. The resulting lists are not treated as final visual evidence automatically; instead, they provide a reproducible pool of examples that is later inspected manually when selecting the qualitative panels.
+
 \subsection{Qualitative Example Export}
+
+INTRA-FAMILY E INTER-FAMILY
