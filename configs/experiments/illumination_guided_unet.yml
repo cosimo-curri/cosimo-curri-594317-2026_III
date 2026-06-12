@@ -1,0 +1,96 @@
+experiment:
+  name: illumination_guided_unet_grid_seed_0_screening
+  seed: 0
+  # restore_checkpoint:
+
+data:
+  train_manifest: data/preprocessed/lol_v2_real.csv  # for both training and validation
+  test_manifests:  # only for evaluation.run_test: true
+    - manifest: data/preprocessed/ex_dark.csv
+      group_by: category
+    - manifest: data/preprocessed/lol_v1.csv
+    - manifest: data/preprocessed/lol_v2_real.csv
+    - manifest: data/preprocessed/lol_v2_synthetic.csv
+    - manifest: data/preprocessed/mill_s.csv
+      group_by: illumination_level
+
+augmentation:  # fixed online train-time augmentation
+  enabled: true  # global switch (if false all augmentations are disabled)
+
+  horizontal_flip:
+    enabled: true
+    p: 0.5
+
+  random_resized_crop:
+    enabled: true
+    output_size: 256
+    scale_min: 0.85
+    scale_max: 1.0
+    ratio_min: 0.95
+    ratio_max: 1.05
+
+  color_jitter:  # input-only
+    enabled: true
+    p: 0.3
+    brightness_min: 0.9
+    brightness_max: 1.1
+    contrast_min: 0.9
+    contrast_max: 1.1
+    saturation_min: 0.95
+    saturation_max: 1.05
+
+  gamma_jitter:  # input-only
+    enabled: true
+    p: 0.3
+    gamma_min: 0.85
+    gamma_max: 1.15
+
+  sensor_noise:  # input-only
+    enabled: true
+    p: 0.2
+    sigma_min: 0.0
+    sigma_max: 0.015
+
+model:
+  name: illumination_guided_unet
+  channels:  # the only case where a list is used for the grid
+    - [16, 32, 64, 128]
+    - [32, 64, 128, 256]
+    - [32, 64, 128, 256, 512]
+  normalization: [none, batch, instance, group]  # none | batch | instance | group
+  activation: leaky_relu  # relu | leaky_relu
+  group_count: 8  # used only by normalization: group
+  upsampling: transposed  # bilinear | transposed
+
+  illumination_method: [luminance, max_rgb]  # luminance | max_rgb
+  # 0 disables smoothing; odd values enable Gaussian smoothing
+  illumination_smoothing_kernel_size: [0, 9]
+  illumination_smoothing_sigma: 1.5
+
+optimizer:  # AdamW (beta1=0.9, beta2=0.999; they are not configurable)
+  lr: [0.0003, 0.0005, 0.001]
+  weight_decay: 0.0001
+
+loss:
+  name: l1_ssim  # SSIM window_size=11; it is not configurable
+  l1_weight: 0.8  # weights must be non-negative and sum to 1.0
+  ssim_weight: 0.2
+
+training:
+  epochs: 999
+  validation_rate: 1
+  batch_size: 16
+  num_workers: 4
+  mixed_precision: true  # true -> float32 & float16 | false -> float32
+  deterministic: false  # true -> reproducibility | false -> efficiency
+
+early_stopping:
+  monitor: ssim  # window_size=11; it is not configurable
+  mode_monitor: max
+  min_delta: 0.0001
+  patience: 15
+  tie_breaker: psnr
+  mode_tie_breaker: max
+
+evaluation:
+  run_test: false

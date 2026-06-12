@@ -24,6 +24,7 @@ CONFIG_COLUMNS = [
     "activation",
     "group_count",
     "upsampling",
+    "family_specific_config",
     "lr",
     "weight_decay",
     "loss_name",
@@ -50,6 +51,7 @@ DETAILED_CONFIG_COLUMNS = [
     "activation",
     "group_count",
     "upsampling",
+    "family_specific_config",
     "optimizer_name",
     "lr",
     "weight_decay",
@@ -85,6 +87,43 @@ DETAILED_CONFIG_COLUMNS = [
     "noise_p",
     "noise_std_range"
 ]
+
+COMMON_CONFIG_KEYS_BY_SECTION = {
+    "model": {
+        "name",
+        "channels",
+        "normalization",
+        "activation",
+        "group_count",
+        "upsampling"
+    },
+    "optimizer": {
+        "name",
+        "lr",
+        "weight_decay"
+    },
+    "loss": {
+        "name",
+        "l1_weight",
+        "ssim_weight"
+    },
+    "training": {
+        "epochs",
+        "validation_rate",
+        "batch_size",
+        "num_workers",
+        "mixed_precision",
+        "deterministic"
+    },
+    "early_stopping": {
+        "monitor",
+        "mode_monitor",
+        "min_delta",
+        "patience",
+        "tie_breaker",
+        "mode_tie_breaker"
+    }
+}
 
 
 # Dataclasses keep simple data containers concise (no __init__, etc.)
@@ -190,6 +229,29 @@ def value_range(
     return [config[min_key], config[max_key]]
 
 
+def extract_family_specific_config(
+    config: dict[str, Any]
+) -> dict[str, dict[str, Any]]:
+    family_specific_config: dict[str, dict[str, Any]] = {}
+
+    for section_name, common_keys in COMMON_CONFIG_KEYS_BY_SECTION.items():
+        section_config = config.get(section_name, {})
+
+        if not isinstance(section_config, dict):
+            continue
+
+        specific_values = {
+            key: value
+            for key, value in section_config.items()
+            if key not in common_keys
+        }
+
+        if specific_values:
+            family_specific_config[section_name] = specific_values
+
+    return family_specific_config
+
+
 def extract_detailed_config_fields(
     run_start: dict[str, Any]
 ) -> dict[str, Any]:
@@ -210,36 +272,43 @@ def extract_detailed_config_fields(
 
     return {
         "model_name": model_config["name"],
-        "channels": model_config["channels"],
-        "normalization": model_config["normalization"],
-        "activation": model_config["activation"],
-        "group_count": model_config["group_count"],
-        "upsampling": model_config["upsampling"],
+        "channels": model_config.get("channels", ""),
+        "normalization": model_config.get("normalization", ""),
+        "activation": model_config.get("activation", ""),
+        "group_count": model_config.get("group_count", ""),
+        "upsampling": model_config.get("upsampling", ""),
+        "family_specific_config": extract_family_specific_config(config),
         "optimizer_name": optimizer_config.get("name", "adamw"),
-        "lr": optimizer_config["lr"],
-        "weight_decay": optimizer_config["weight_decay"],
+        "lr": optimizer_config.get("lr", ""),
+        "weight_decay": optimizer_config.get("weight_decay", ""),
         "loss_name": loss_config["name"],
-        "l1_weight": loss_config["l1_weight"],
-        "ssim_weight": loss_config["ssim_weight"],
-        "epochs": training_config["epochs"],
-        "validation_rate": training_config["validation_rate"],
-        "batch_size": training_config["batch_size"],
-        "num_workers": training_config["num_workers"],
-        "mixed_precision": training_config["mixed_precision"],
-        "deterministic": training_config["deterministic"],
-        "early_stopping_monitor": early_stopping_config["monitor"],
+        "l1_weight": loss_config.get("l1_weight", ""),
+        "ssim_weight": loss_config.get("ssim_weight", ""),
+        "epochs": training_config.get("epochs", ""),
+        "validation_rate": training_config.get("validation_rate", ""),
+        "batch_size": training_config.get("batch_size", ""),
+        "num_workers": training_config.get("num_workers", ""),
+        "mixed_precision": training_config.get("mixed_precision", ""),
+        "deterministic": training_config.get("deterministic", ""),
+        "early_stopping_monitor": early_stopping_config.get("monitor", ""),
         "early_stopping_mode_monitor": (
-            early_stopping_config["mode_monitor"]
+            early_stopping_config.get("mode_monitor", "")
         ),
-        "early_stopping_min_delta": early_stopping_config["min_delta"],
-        "early_stopping_patience": early_stopping_config["patience"],
-        "early_stopping_tie_breaker": early_stopping_config["tie_breaker"],
+        "early_stopping_min_delta": early_stopping_config.get(
+            "min_delta",
+            ""
+        ),
+        "early_stopping_patience": early_stopping_config.get("patience", ""),
+        "early_stopping_tie_breaker": early_stopping_config.get(
+            "tie_breaker",
+            ""
+        ),
         "early_stopping_mode_tie_breaker": (
-            early_stopping_config["mode_tie_breaker"]
+            early_stopping_config.get("mode_tie_breaker", "")
         ),
-        "augmentation_enabled": augmentation_config["enabled"],
-        "horizontal_flip_p": horizontal_flip_config["p"],
-        "random_resized_crop_enabled": random_crop_config["enabled"],
+        "augmentation_enabled": augmentation_config.get("enabled", ""),
+        "horizontal_flip_p": horizontal_flip_config.get("p", ""),
+        "random_resized_crop_enabled": random_crop_config.get("enabled", ""),
         "random_resized_crop_scale": value_range(
             random_crop_config,
             "scale_min",
@@ -250,8 +319,8 @@ def extract_detailed_config_fields(
             "ratio_min",
             "ratio_max"
         ),
-        "color_jitter_enabled": color_jitter_config["enabled"],
-        "color_jitter_p": color_jitter_config["p"],
+        "color_jitter_enabled": color_jitter_config.get("enabled", ""),
+        "color_jitter_p": color_jitter_config.get("p", ""),
         "color_jitter_brightness": value_range(
             color_jitter_config,
             "brightness_min",
@@ -267,15 +336,15 @@ def extract_detailed_config_fields(
             "saturation_min",
             "saturation_max"
         ),
-        "gamma_jitter_enabled": gamma_jitter_config["enabled"],
-        "gamma_jitter_p": gamma_jitter_config["p"],
+        "gamma_jitter_enabled": gamma_jitter_config.get("enabled", ""),
+        "gamma_jitter_p": gamma_jitter_config.get("p", ""),
         "gamma_jitter_range": value_range(
             gamma_jitter_config,
             "gamma_min",
             "gamma_max"
         ),
-        "noise_enabled": noise_config["enabled"],
-        "noise_p": noise_config["p"],
+        "noise_enabled": noise_config.get("enabled", ""),
+        "noise_p": noise_config.get("p", ""),
         "noise_std_range": value_range(
             noise_config,
             "sigma_min",
@@ -301,28 +370,32 @@ def extract_config_fields(
         "config_id": run_start["config_id"],
         "experiment_name": run_start["experiment_name"],
         "model_name": model_config["name"],
-        "channels": model_config["channels"],
-        "normalization": model_config["normalization"],
-        "activation": model_config["activation"],
-        "group_count": model_config["group_count"],
-        "upsampling": model_config["upsampling"],
-        "lr": optimizer_config["lr"],
-        "weight_decay": optimizer_config["weight_decay"],
+        "channels": model_config.get("channels", ""),
+        "normalization": model_config.get("normalization", ""),
+        "activation": model_config.get("activation", ""),
+        "group_count": model_config.get("group_count", ""),
+        "upsampling": model_config.get("upsampling", ""),
+        "family_specific_config": extract_family_specific_config(config),
+        "lr": optimizer_config.get("lr", ""),
+        "weight_decay": optimizer_config.get("weight_decay", ""),
         "loss_name": loss_config["name"],
-        "l1_weight": loss_config["l1_weight"],
-        "ssim_weight": loss_config["ssim_weight"],
-        "epochs": training_config["epochs"],
-        "validation_rate": training_config["validation_rate"],
-        "batch_size": training_config["batch_size"],
-        "num_workers": training_config["num_workers"],
-        "mixed_precision": training_config["mixed_precision"],
-        "deterministic": training_config["deterministic"],
-        "monitor": early_stopping_config["monitor"],
-        "mode_monitor": early_stopping_config["mode_monitor"],
-        "min_delta": early_stopping_config["min_delta"],
-        "patience": early_stopping_config["patience"],
-        "tie_breaker": early_stopping_config["tie_breaker"],
-        "mode_tie_breaker": early_stopping_config["mode_tie_breaker"]
+        "l1_weight": loss_config.get("l1_weight", ""),
+        "ssim_weight": loss_config.get("ssim_weight", ""),
+        "epochs": training_config.get("epochs", ""),
+        "validation_rate": training_config.get("validation_rate", ""),
+        "batch_size": training_config.get("batch_size", ""),
+        "num_workers": training_config.get("num_workers", ""),
+        "mixed_precision": training_config.get("mixed_precision", ""),
+        "deterministic": training_config.get("deterministic", ""),
+        "monitor": early_stopping_config.get("monitor", ""),
+        "mode_monitor": early_stopping_config.get("mode_monitor", ""),
+        "min_delta": early_stopping_config.get("min_delta", ""),
+        "patience": early_stopping_config.get("patience", ""),
+        "tie_breaker": early_stopping_config.get("tie_breaker", ""),
+        "mode_tie_breaker": early_stopping_config.get(
+            "mode_tie_breaker",
+            ""
+        )
     }
 
     if include_seed:
