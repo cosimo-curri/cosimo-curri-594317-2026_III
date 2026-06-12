@@ -7,45 +7,45 @@ Repeated entry---line 123 of file main.bib
  : @inproceedings{DBLP:conf/bmvc/WeiWY018
  :                                       ,
 I'm skipping whatever remains of this entry
-You've used 10 entries,
+You've used 11 entries,
             2708 wiz_defined-function locations,
-            657 strings with 6741 characters,
-and the built_in function-call counts, 5449 in all, are:
-= -- 479
-> -- 390
+            664 strings with 6909 characters,
+and the built_in function-call counts, 5952 in all, are:
+= -- 525
+> -- 420
 < -- 3
-+ -- 130
-- -- 120
-* -- 483
-:= -- 852
-add.period$ -- 32
-call.type$ -- 10
-change.case$ -- 70
-chr.to.int$ -- 10
-cite$ -- 20
-duplicate$ -- 226
-empty$ -- 383
-format.name$ -- 132
-if$ -- 1123
++ -- 140
+- -- 129
+* -- 531
+:= -- 929
+add.period$ -- 35
+call.type$ -- 11
+change.case$ -- 76
+chr.to.int$ -- 11
+cite$ -- 22
+duplicate$ -- 247
+empty$ -- 423
+format.name$ -- 142
+if$ -- 1226
 int.to.chr$ -- 1
 int.to.str$ -- 1
-missing$ -- 10
-newline$ -- 58
-num.names$ -- 40
-pop$ -- 129
+missing$ -- 11
+newline$ -- 63
+num.names$ -- 44
+pop$ -- 139
 preamble$ -- 1
-purify$ -- 60
+purify$ -- 65
 quote$ -- 0
-skip$ -- 175
+skip$ -- 189
 stack$ -- 0
-substring$ -- 189
-swap$ -- 28
+substring$ -- 216
+swap$ -- 29
 text.length$ -- 2
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 110
+type$ -- 121
 warning$ -- 0
-while$ -- 44
+while$ -- 49
 width$ -- 0
-write$ -- 138
+write$ -- 151
 (There was 1 error message)

@@ -1,0 +1,43 @@
+\section{Illumination-Guided U-Net Family}
+
+The second model family implemented in this project is an illumination-guided U-Net, introduced as a lightweight mitigation of the local brightness-control failures observed in the baseline. Instead of changing the overall encoder-decoder structure or adding a separate enhancement branch, this variant keeps the same U-Net backbone and modifies only the input representation: the low-light RGB image is complemented with an estimated illumination map. This idea is related to illumination-guided encoder-decoder enhancement models~\cite{DBLP:journals/corr/abs-2507-13360}, but it is deliberately simplified here in order to isolate the effect of providing explicit illumination information while keeping the architecture close to the baseline.
+
+\subsection{Architecture}
+
+The illumination-guided U-Net preserves the encoder-decoder structure described in the previous section. Therefore, it still uses convolutional blocks, downsampling stages, upsampling stages, skip connections, and a final sigmoid output in the $[0,1]$ range. The output is also unchanged: the model still predicts a three-channel enhanced RGB image.
+
+The difference is at the input level. In the baseline U-Net, each image is represented by three channels, corresponding to red, green, and blue. In the illumination-guided U-Net, a fourth channel is concatenated to these RGB channels. This fourth channel is the estimated illumination map, i.e., a single-channel image that assigns one brightness value to each spatial position. Its purpose is to tell the network which regions are darker, which regions are already relatively bright, and where illumination may be uneven.
+
+No ground-truth illumination annotation is required. The map is computed directly from the low-light input image. During training, this computation is performed after online data augmentation. Therefore, the illumination map is estimated from the same augmented input that is actually passed to the model. This is important because the fourth channel must remain consistent with the RGB image seen by the network. During validation and test evaluation, where no online augmentation is applied, the map is computed from the deterministic preprocessed input.
+
+Two simple illumination estimators are considered. The first one is based on luminance, computed with the same ITU-R BT.709 luma definition used during preprocessing and diagnostic evaluation in Eq.~\ref{eq:luminance}.
+
+The second estimator is based on the maximum RGB response:
+\begin{equation}
+	L_{\max}
+	=
+	\max(R,G,B).
+\end{equation}
+This choice follows the intuition that, at each pixel, the brightest color channel provides a simple estimate of the local amount of light. Similar maximum-channel illumination estimates have been used in low-light enhancement methods based on illumination map estimation~\cite{DBLP:journals/tip/GuoLL17}.
+
+The illumination map can optionally be smoothed before being concatenated to the RGB image. Smoothing is performed with a Gaussian blur, which replaces each value with a weighted average of nearby values, giving more importance to pixels close to the center and less importance to farther pixels. In this work, Gaussian smoothing is included because illumination is expected to vary more slowly than texture, noise, or object edges. Without smoothing, the fourth channel may contain high-frequency details that are not really illumination, such as fine texture or sensor noise. With smoothing, the map becomes more focused on the broad brightness distribution of the scene.
+
+The smoothing option is controlled by the size of the Gaussian kernel. A value equal to zero disables smoothing, while a positive odd value enables it. Odd kernel sizes are used because they define a symmetric window with a well-defined central pixel. This is useful for Gaussian filtering, since the weights are distributed around the center of the window. In the grid search, the smoothed version uses a $9 \times 9$ Gaussian kernel with standard deviation $\sigma = 1.5$. The kernel size defines the spatial support of the filter, while $\sigma$ controls how quickly the weights decrease as the distance from the center increases: smaller values make the smoothing more local, whereas larger values produce a stronger blur. The smoothing option is configurable because excessive smoothing may remove useful local illumination changes, especially near shadows or light sources.
+
+Once estimated, the illumination map is appended to the RGB image, producing a four-channel input. As a result, only the first convolutional layer must be adapted to receive one additional channel; the rest of the U-Net remains identical to the baseline for a fixed channel schedule. Therefore, for any fixed backbone configuration, the illumination-guided variant introduces only a minimal parameter increase, confined to the first convolutional block.
+
+The expected benefit is better local brightness control. In dark regions, the illumination cue may help the network apply a stronger correction. In already bright regions, it may help the network avoid unnecessary amplification. Therefore, the model is expected to reduce residual darkness, limit over-exposure around local light sources, and adapt the enhancement more locally than the baseline U-Net.
+
+\subsection{Training Objective and Grid Search}
+
+The illumination-guided U-Net follows the same experimental protocol used for the baseline family. The training objective is kept unchanged in order to isolate the effect of the illumination cue. Therefore, the model is trained with the same L1-SSIM loss defined in Eq.~\ref{eq:l1_ssim_loss}. The loss still compares the predicted RGB image with the paired normally exposed target. The illumination map is used only as additional input information; it is not supervised by a separate target and does not introduce an additional loss term.
+
+The grid search uses the same screening budget as the baseline U-Net, with 144 configurations. However, the search space is made family-specific: upsampling and weight decay are fixed to the values selected by the baseline U-Net, while the freed budget is used to explore the illumination estimator and the smoothing option. The explored hyperparameter space is:
+
+\begin{itemize}[topsep=5pt]
+	\item Channel schedule $\in$ $(16,32,64,128)$, $(32,64,128,256)$, $(32,64,128,256,512)$;
+	\item Normalization $\in$ none, batch, instance, group;
+	\item Learning rate $\in$ $3{\cdot}10^{-4}$, $5{\cdot}10^{-4}$, $10^{-3}$;
+	\item Illumination estimator $\in$ luminance, maximum RGB response;
+	\item Illumination smoothing $\in$ disabled, Gaussian blur with $9 \times 9$ kernel and $\sigma = 1.5$.
+\end{itemize}

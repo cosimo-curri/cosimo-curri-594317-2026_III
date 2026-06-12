@@ -25,6 +25,7 @@ The U-Net family follows the general experimental protocol described in Section~
 	0.8 \, \mathrm{MAE}(\hat{I}, I)
 	+
 	0.2 \, \bigl(1 - \mathrm{SSIM}(\hat{I}, I)\bigr),
+	\label{eq:l1_ssim_loss}
 \end{equation}
 where $\hat{I}$ is the enhanced output and $I$ is the reference image. The two coefficients are configurable in the experiment file, but they are kept fixed in the grid search.
 
@@ -33,7 +34,7 @@ The grid search defined for this family explores a set of architectural and opti
 \begin{itemize}[topsep=5pt]
 	\item Channel schedule $\in$ $(16,32,64,128)$, $(32,64,128,256)$, $(32,64,128,256,512)$;
 	\item Normalization $\in$ none, batch, instance, group;
-	\item Upsampling $\in$ bilinear, transposed;
+	\item Upsampling $\in$ bilinear interpolation, transposed convolution;
 	\item Learning rate $\in$ $3{\cdot}10^{-4}$, $5{\cdot}10^{-4}$, $10^{-3}$;
 	\item Weight decay $\in$ $0$, $10^{-4}$.
 \end{itemize}
