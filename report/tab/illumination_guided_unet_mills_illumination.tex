@@ -1,0 +1,23 @@
+\begin{table*}[t]
+	\centering
+	\caption{MILLs illumination-level results for the selected illumination-guided U-Net configuration. Values are reported as mean $\pm$ standard deviation across three seeds. MILLs is paired, so full-reference, no-reference, and diagnostic metrics are reported. Bold values mark the best score for each full-reference metric.}
+	\label{tab:illumination_guided_unet_mills_illumination}
+	\resizebox{\textwidth}{!}{
+		\begin{tabular}{cccccccccccc}
+			\toprule
+			Level & SSIM & PSNR (dB) & MAE & NIQE & BRISQUE & Mean $Y$ & Std $Y$ & Dark (\%) & Clip (\%) & RGBI & Lap. sharp. \\
+			\midrule
+			1 & $0.690 \pm 0.013$ & $16.77 \pm 0.61$ & $\mathbf{0.130 \pm 0.011}$ & $6.00 \pm 0.03$ & $20.97 \pm 2.39$ & $0.461 \pm 0.019$ & $0.169 \pm 0.005$ & $1.8 \pm 0.3$ & $0.00 \pm 0.00$ & $0.092 \pm 0.011$ & $0.0083 \pm 0.0008$ \\
+			2 & $0.729 \pm 0.028$ & $16.12 \pm 0.87$ & $0.153 \pm 0.017$ & $5.98 \pm 0.18$ & $24.27 \pm 2.81$ & $0.492 \pm 0.023$ & $0.130 \pm 0.005$ & $0.9 \pm 0.4$ & $0.00 \pm 0.00$ & $0.092 \pm 0.013$ & $0.0064 \pm 0.0006$ \\
+			3 & $0.743 \pm 0.032$ & $16.43 \pm 0.90$ & $0.150 \pm 0.017$ & $6.09 \pm 0.17$ & $24.49 \pm 3.08$ & $0.486 \pm 0.025$ & $0.120 \pm 0.006$ & $0.8 \pm 0.2$ & $0.00 \pm 0.00$ & $0.090 \pm 0.013$ & $0.0059 \pm 0.0006$ \\
+			4 & $0.748 \pm 0.033$ & $16.56 \pm 0.92$ & $0.148 \pm 0.018$ & $6.08 \pm 0.14$ & $24.92 \pm 3.02$ & $0.482 \pm 0.026$ & $0.116 \pm 0.006$ & $0.6 \pm 0.1$ & $0.00 \pm 0.00$ & $0.090 \pm 0.014$ & $0.0057 \pm 0.0005$ \\
+			5 & $0.751 \pm 0.034$ & $16.70 \pm 0.96$ & $0.146 \pm 0.019$ & $6.09 \pm 0.17$ & $24.96 \pm 2.96$ & $0.479 \pm 0.027$ & $0.114 \pm 0.007$ & $0.5 \pm 0.1$ & $0.00 \pm 0.00$ & $0.089 \pm 0.014$ & $0.0056 \pm 0.0005$ \\
+			6 & $0.753 \pm 0.034$ & $16.81 \pm 0.97$ & $0.144 \pm 0.019$ & $6.09 \pm 0.18$ & $25.02 \pm 2.95$ & $0.477 \pm 0.027$ & $0.113 \pm 0.007$ & $0.4 \pm 0.1$ & $0.00 \pm 0.00$ & $0.089 \pm 0.014$ & $0.0056 \pm 0.0005$ \\
+			7 & $0.755 \pm 0.034$ & $16.87 \pm 0.98$ & $0.143 \pm 0.019$ & $6.10 \pm 0.18$ & $25.13 \pm 2.98$ & $0.475 \pm 0.027$ & $0.112 \pm 0.007$ & $0.4 \pm 0.1$ & $0.00 \pm 0.00$ & $0.088 \pm 0.014$ & $0.0055 \pm 0.0005$ \\
+			8 & $0.756 \pm 0.035$ & $16.92 \pm 0.97$ & $0.142 \pm 0.019$ & $6.14 \pm 0.17$ & $25.19 \pm 2.93$ & $0.474 \pm 0.027$ & $0.112 \pm 0.007$ & $0.3 \pm 0.1$ & $0.00 \pm 0.00$ & $0.088 \pm 0.014$ & $0.0055 \pm 0.0005$ \\
+			9 & $\mathbf{0.759 \pm 0.035}$ & $\mathbf{17.04 \pm 0.96}$ & $0.140 \pm 0.019$ & $6.14 \pm 0.21$ & $25.20 \pm 2.91$ & $0.474 \pm 0.027$ & $0.111 \pm 0.007$ & $0.3 \pm 0.1$ & $0.00 \pm 0.00$ & $0.088 \pm 0.014$ & $0.0055 \pm 0.0005$ \\
+			10 & $0.757 \pm 0.035$ & $17.00 \pm 0.97$ & $0.141 \pm 0.019$ & $6.13 \pm 0.20$ & $25.30 \pm 2.97$ & $0.472 \pm 0.027$ & $0.111 \pm 0.007$ & $0.2 \pm 0.1$ & $0.00 \pm 0.00$ & $0.087 \pm 0.014$ & $0.0054 \pm 0.0005$ \\
+			\bottomrule
+		\end{tabular}
+	}
+\end{table*}

@@ -371,8 +371,13 @@ class ExperimentTrainer:
                 enabled=self.mixed_precision
             ):
                 output = self.wrapper.forward(self.model, batch)
-                prediction = self.wrapper.get_prediction(output)
-                loss = self.loss_function(prediction, batch["target"])
+
+                loss = compute_wrapper_loss(
+                    wrapper=self.wrapper,
+                    loss_function=self.loss_function,
+                    output=output,
+                    batch=batch
+                )
 
             self.scaler.scale(loss).backward()
             self.scaler.step(self.optimizer)
@@ -720,6 +725,20 @@ class ExperimentTrainer:
             f"best {monitor_name.upper()}={best_monitor} | "
             f"best {tie_breaker_name.upper()}={best_tie_breaker}"
         )
+
+
+def compute_wrapper_loss(
+    *,
+    wrapper: Any,
+    loss_function: nn.Module,
+    output: Any,
+    batch: dict[str, Any]
+) -> torch.Tensor:
+    if hasattr(wrapper, "compute_loss"):
+        return wrapper.compute_loss(loss_function, output, batch)
+
+    prediction = wrapper.get_prediction(output)
+    return loss_function(prediction, batch["target"])
 
 
 def build_optimizer(

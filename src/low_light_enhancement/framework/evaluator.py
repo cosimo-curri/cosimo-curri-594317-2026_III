@@ -5,7 +5,7 @@ from collections import defaultdict
 from typing import Any
 
 import torch
-from torch import nn
+from torch import Tensor, nn
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
@@ -19,6 +19,20 @@ from src.low_light_enhancement.framework.metrics import (
     aggregate_metrics
 )
 from src.low_light_enhancement.framework.torch_utils import move_batch_to_device
+
+
+def compute_wrapper_loss(
+    *,  # next options are keyword-only
+    wrapper: Any,
+    loss_function: nn.Module,
+    output: Any,
+    batch: dict[str, Any]
+) -> Tensor:
+    if hasattr(wrapper, "compute_loss"):
+        return wrapper.compute_loss(loss_function, output, batch)
+
+    prediction = wrapper.get_prediction(output)
+    return loss_function(prediction, batch["target"])
 
 
 def build_progress_description(
@@ -106,7 +120,13 @@ class Evaluator:
                 target = batch["target"]
 
                 if self.loss_function is not None and target is not None:
-                    loss = self.loss_function(prediction, target)
+                    loss = compute_wrapper_loss(
+                        wrapper=self.wrapper,
+                        loss_function=self.loss_function,
+                        output=output,
+                        batch=batch
+                    )
+
                     batch_size = prediction.shape[0]
                     loss_sum += float(loss.detach().cpu().item()) * batch_size
                     loss_count += batch_size

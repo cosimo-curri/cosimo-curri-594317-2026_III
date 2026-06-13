@@ -53,8 +53,7 @@ This subsection reports the quantitative behavior of the selected U-Net family. 
 
 \input{tab/unet_final_evaluation}
 
-\paragraph{In-domain and cross-dataset evaluation.}
-
+\analysispar{In-domain and cross-dataset evaluation}
 LOL-v2 Real is the in-domain reference, because it comes from the same dataset and acquisition setting used for training and validation. Compared with this reference, LOL-v1 behaves as the closest cross-dataset case: it obtains higher SSIM and PSNR, and a lower MAE. This does not mean that cross-dataset evaluation is generally easier, but rather that LOL-v1 is still very compatible with the enhancement mapping learned from LOL-v2 Real.
 
 The other paired cross-dataset results show a clearer domain shift. LOL-v2 Synthetic and MILLs both have lower full-reference quality than LOL-v2 Real, with SSIM around $0.76$ and MAE around $0.13$. This is important because LOL-v2 Synthetic still belongs to the LOL-v2 family, but its synthetic degradation process differs from the real low-light acquisition used for training. MILLs confirms the same limitation under a different paired dataset. Therefore, the selected U-Net works well when the test distribution remains close to the training domain, but its reconstruction quality decreases when the low-light formation process changes.
@@ -63,8 +62,7 @@ The no-reference metrics should be read as complementary indicators. MILLs obtai
 
 The diagnostic metrics help explain how the model modifies brightness and contrast. On paired datasets, the mean output luminance stays in a narrow range, from $0.446$ to $0.468$. This suggests that the U-Net tends to push different paired datasets toward a similar brightness level. ExDark is different: it has the lowest mean luminance, $0.407$, and the highest dark-pixel ratio, $5.1\%$. Since ExDark is unpaired and contains real dark images outside the LOL-v2 Real distribution, this indicates that the model still brightens the images, but leaves more regions under-exposed. The RGB imbalance is also higher on MILLs and ExDark than on LOL-v2 Real, suggesting a stronger risk of color shifts under cross-dataset evaluation.
 
-\paragraph{ExDark category-level analysis.}
-
+\analysispar{ExDark category-level analysis}
 ExDark is further analyzed by object category because it is unpaired and category metadata is available. Table~\ref{tab:unet_exdark_category} reports the category-level no-reference and diagnostic results.
 
 \input{tab/unet_exdark_category}
@@ -73,8 +71,7 @@ The ExDark category-level results show that performance is not uniform across sc
 
 The diagnostic metrics make the category differences easier to interpret. Bottle and cup have the lowest mean luminance, around $0.388$--$0.389$, and also the highest dark-pixel ratio, around $7.4\%$. These categories therefore remain the most under-exposed after enhancement. Car has the highest clipping ratio, suggesting that reflective surfaces or vehicle lights can produce localized over-bright regions. Bottle also has the largest RGB imbalance, which indicates a stronger risk of color cast. These results suggest that the ExDark behavior depends not only on the semantic category, but also on correlated visual properties such as object size, background darkness, reflective materials, and local light sources.
 
-\paragraph{MILLs illumination-level analysis.}
-
+\analysispar{MILLs illumination-level analysis}
 MILLs is paired, and its illumination-level metadata makes it possible to analyze how the U-Net behaves as input brightness changes. Table~\ref{tab:unet_mills_illumination} reports the results grouped by illumination level.
 
 \input{tab/unet_mills_illumination}
@@ -83,8 +80,7 @@ The MILLs results show that the darkest illumination level is the most difficult
 
 PSNR and MAE do not follow a perfectly monotonic trend, especially at the first two illumination levels. This suggests that the errors are not only caused by average pixel differences, but also by structural and contrast-related changes. The diagnostic metrics support this interpretation: mean luminance remains within a limited interval, while the dark-pixel ratio decreases strongly across levels. In other words, the U-Net tends to enhance MILLs images toward a relatively stable brightness range, but its ability to recover structure is weaker when the starting illumination is very low.
 
-\paragraph{Summary.}
-
+\analysispar{Summary}
 Overall, the quantitative analysis shows a clear difference between in-domain and cross-dataset behavior. The selected U-Net is effective on LOL-like data, especially LOL-v2 Real and LOL-v1, but its full-reference performance drops on LOL-v2 Synthetic and MILLs. ExDark further shows that, in an unpaired real-world setting, the model improves visibility but leaves more residual darkness and stronger diagnostic signs of domain shift. This confirms that the baseline U-Net learns a useful enhancement mapping, but does not fully generalize to all low-light distributions.
 
 \subsection{Qualitative Analysis}
@@ -93,40 +89,31 @@ Visual inspection is useful to understand how the selected U-Net behaves beyond 
 
 \input{fig/unet_qualitative/unet_qualitative}
 
-\paragraph{Successful enhancement.}
-
+\analysispar{Successful enhancement}
 The first row shows a good enhancement example from LOL-v1. The input image is strongly under-exposed, but the U-Net output recovers most of the scene visibility. The notebook, the paper edges, and the objects on the table become clearly visible, and the output remains close to the target image. This example is useful because it shows the behavior expected from the model when the test image is compatible with the enhancement mapping learned from LOL-v2 Real: the network increases brightness without introducing strong color shifts, obvious clipping, or severe loss of detail.
 
-\paragraph{Residual darkness.}
-
+\analysispar{Residual darkness}
 The residual darkness example, also from LOL-v1, was selected because the model improves the image but does not fully recover the dark regions. In the output, the colorful object on the right becomes visible, but the black bag or jacket on the left remains much darker than in the target image. This failure is important because it shows that enhancement is not uniform across the image. The model can brighten already visible regions, but very dark areas may remain under-exposed. A possible reason is that these regions contain very weak input signal. When the input has almost no visible texture, the U-Net has limited information to reconstruct the missing content, especially because it is trained mainly to minimize reconstruction error rather than to explicitly recover local illumination.
 
-\paragraph{Over-exposure.}
-
+\analysispar{Over-exposure}
 The over-exposure example was selected from ExDark because it shows the opposite problem in an unpaired real night scene. The input image contains lamps and reflective surfaces. The output increases global visibility, but the bright lamp region and the surrounding pavement become too bright and partially washed out. Since this sample comes from ExDark, no paired target is available, but the visual artifact is clear: some areas receive too much enhancement. This can happen when the model applies a brightness correction learned from darker LOL-like images to a scene that already contains strong local light sources. In this case, a global or weakly local enhancement mapping may brighten both dark regions and already bright regions, producing localized saturation or over-exposure.
 
-\paragraph{Color cast.}
-
+\analysispar{Color cast}
 The color cast example was selected from MILLs because the paired target makes the chromatic error visible. The output is brighter than the input, but it introduces a yellow-green cast over the scene. The target image has more natural and saturated colors, especially on the orange bowl and the colored objects. This failure is consistent with the quantitative observation that RGB imbalance increases on cross-dataset data, especially on MILLs and ExDark. A possible explanation is that the training domain does not cover all color and illumination conditions present in MILLs. As a result, the model learns a correction that improves luminance but does not always preserve the correct color balance under a different acquisition setting.
 
-\paragraph{Over-smoothing.}
-
+\analysispar{Over-smoothing}
 The over-smoothing example was selected from ExDark because the enhancement removes too much texture in an unpaired outdoor scene. The boat and the sea become brighter, but the output looks soft and blurred. Fine details in the water and around the boat are less clear than in the input. This suggests that the U-Net tends to produce a smooth solution when the input is very dark or low-contrast. A possible reason is the pixel-wise reconstruction objective: minimizing average error often favors smooth predictions, especially when high-frequency details are uncertain. The skip connections help preserve structure, but they are not sufficient when the original texture is weak or noisy.
 
-\paragraph{Residual noise.}
-
+\analysispar{Residual noise}
 The residual noise example was selected from ExDark because the output still contains visible high-frequency artifacts after enhancement. The fence and the background become brighter, but the image also reveals noisy patterns and uneven texture. This failure is different from over-smoothing: here the model does not simply remove detail, but also exposes or amplifies noise that was less visible in the dark input. A possible reason is that low-light images often contain sensor noise, and increasing brightness also increases the visibility of this noise. Since the baseline U-Net is not explicitly noise-aware, it may confuse noise with real texture or fail to suppress it during enhancement.
 
-\paragraph{Halo artifacts.}
-
+\analysispar{Halo artifacts}
 The halo artifacts example was selected from ExDark because the artifact is very clear around high-contrast structures. The bicycle frame and wheels become surrounded by bright contours, producing an unnatural outline. This indicates that the model can over-enhance edges or strong local transitions. A possible reason is that the network tries to increase contrast around visible structures, but the learned correction is not sufficiently edge-aware. When the input contains thin bright structures on a dark background, the output may spread brightness around the edges and create halo-like effects.
 
-\paragraph{Hallucinated details.}
-
+\analysispar{Hallucinated details}
 The hallucinated details example was selected from LOL-v2 Real because the paired target makes the non-faithful structure easy to identify. The enhanced image contains a hazy diagonal pattern over the court, while the target remains cleaner and more uniform. This is a severe failure because the model is not only changing brightness or color, but also adding visual content that does not correspond to the reference. A possible reason is that the network tries to infer missing information from extremely weak input evidence. When the low-light input does not provide enough reliable detail, the model may produce plausible-looking local patterns that reduce training loss on average but are not faithful to the true scene.
 
-\paragraph{Summary.}
-
+\analysispar{Summary}
 Overall, the qualitative analysis confirms the main conclusion of the quantitative results. The U-Net can produce convincing enhancement when the test image is close to the training distribution, as shown by the LOL-v1 good enhancement example and by the strong LOL-like quantitative results. However, cross-dataset inputs expose several limitations: residual darkness on very dark regions, over-exposure near local light sources, color shifts under different illumination statistics, loss of texture, residual noise, halos around edges, and occasional hallucinated details. These errors show that the baseline U-Net learns a useful enhancement mapping, but it does not fully separate illumination correction, color preservation, denoising, and detail reconstruction.
 
 \subsection{Mitigation Strategies}

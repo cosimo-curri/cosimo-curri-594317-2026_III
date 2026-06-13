@@ -31,8 +31,7 @@ The same manifest information is also useful during evaluation. For ExDark, the 
 
 \subsection{Offline Preprocessing}
 
-\paragraph{Deterministic preprocessing.}
-
+\analysispar{Deterministic preprocessing}
 After manifest generation, all datasets are processed by an offline preprocessing script. This stage is called ``offline'' because it contains deterministic preliminary operations that are performed once for all the experiments of this project rather than repeatedly during training or evaluation. The processed images are stored on disk and are then used by all later stages of the pipeline.
 
 For each CSV manifest, the script first performs a lightweight consistency check. It verifies that no input path is duplicated within the same split and that the same input path does not appear in different splits. These checks are intentionally limited, since the dataset-specific pairing rules have already been handled during manifest generation.
@@ -43,8 +42,7 @@ Each image undergoes the following deterministic operations: (i) loading with Ex
 
 A fixed resizing strategy is used instead of cropping. In this project, preserving the whole scene during preprocessing was considered preferable to selecting a local region, because a crop would permanently discard part of the image and could remove relevant low-light regions, light sources, or objects needed for cross-dataset analysis. Although resizing may slightly distort the aspect ratio of some images, it keeps the full scene and provides a fixed deterministic input size for all datasets. This choice does not exclude the use of cropping as online data augmentation during training: unlike offline cropping, random resized crops are stochastic, do not permanently modify the preprocessed dataset, and are applied only to the training split, while validation and test images remain deterministic.
 
-\paragraph{Dataset statistics.}
-
+\analysispar{Dataset statistics}
 In addition to producing the preprocessed images and updated manifests, the script computes simple dataset-level statistics and writes them to a dedicated summary file. These statistics are computed before applying the final resize, after loading each image with the correct orientation and converting it to RGB. Therefore, they summarize the original image sizes and the illumination properties of the images before they are converted into the fixed $256 \times 256$ representation used as model input.
 
 For each image of size $H \times W$, a luminance map $Y \in [0,1]^{H \times W}$ is computed from the RGB channels using the ITU-R BT.709 luma coefficients:
@@ -74,16 +72,14 @@ The statistics provide a compact description of the illumination distribution en
 \subsection{Experiment Execution}
 \label{sec:experiment_execution}
 
-\paragraph{Run configuration.}
-
+\analysispar{Run configuration}
 After offline preprocessing, the third stage of the pipeline is experiment execution. This stage uses the preprocessed manifests to run the experiments required by the protocol. It is model-agnostic: the pipeline does not assume a specific architecture. Instead, each run is built from an experiment configuration, which specifies the model family, the training and validation manifests, the hyperparameters, the loss function, the online data augmentation policy, the early-stopping rule, and whether test evaluation should be executed.
 
 The experiment launcher expands the hyperparameter grid defined in the configuration and creates one resolved configuration for each combination of values, i.e., a set of configurations in which every grid parameter has been replaced by one concrete value. This makes it possible to describe a large set of experiments compactly.
 
 Each resolved configuration is assigned a configuration identifier. This identifier is computed from the part of the configuration that defines the model and its training setup, while run-specific or evaluation-specific fields are ignored. In this way, repeated runs of the same configuration, for example with different seeds, can be recognized and aggregated correctly.
 
-\paragraph{Training, data augmentation, and validation.}
-
+\analysispar{Training, data augmentation, and validation}
 For each run, the framework builds the model, the loss function, the optimizer, and the data loaders from the resolved configuration. Model-specific details are isolated behind lightweight model-family wrappers, which define how the model and loss are constructed, how a batch is passed through the model, and how the model output is interpreted as a prediction. Training and validation samples are read from the preprocessed manifests, using the split field to distinguish the two partitions. Since at this point of the pipeline the input format is the same for all datasets, the execution stage no longer depends on the original dataset folder structure.
 
 Online data augmentation is also part of experiment execution. The augmentation policy is defined in the experiment configuration and can enable or disable each transformation and control its sampling behavior. In the current experimental protocol, however, this policy is kept fixed across runs, so that model configurations are compared under the same data variability.
@@ -128,7 +124,7 @@ SSIM measures the structural similarity between the prediction and the reference
 	},
 	\label{eq:ssim}
 \end{equation}
-%where $\mu_{\hat{I}}$ and $\mu_I$ are the local means, and $\sigma_{\hat{I}}^2$ and $\sigma_I^2$ are the local variances of the prediction $\hat{I}$ and the reference image $I$, respectively; $\sigma_{\hat{I}I}$ is their local covariance. The final SSIM value is obtained by averaging the local SSIM values over all spatial positions and channels.
+where $\mu_{\hat{I}}$ and $\mu_I$ are the local means, and $\sigma_{\hat{I}}^2$ and $\sigma_I^2$ are the local variances of the prediction $\hat{I}$ and the reference image $I$, respectively; $\sigma_{\hat{I}I}$ is their local covariance. The final SSIM value is obtained by averaging the local SSIM values over all spatial positions and channels.
 
 PSNR is computed from the mean squared error (MSE). The MSE is defined as
 \begin{equation}
@@ -161,14 +157,12 @@ Early stopping is configured in a model-agnostic way. The framework monitors a p
 
 Mixed precision is controlled by the experiment configuration. When enabled, it allows some training computations to use lower numerical precision, which can reduce memory usage and improve speed. This option is used only when a CUDA device, namely an NVIDIA graphics processing unit (GPU), is available. In that case, the framework also uses a gradient scaler: it temporarily multiplies the loss by a scaling factor before backpropagation, so that very small gradients are easier to represent in lower precision, and then scales the gradients back before the optimizer updates the model weights. This helps reduce numerical instability while still benefiting from mixed precision. If mixed precision is disabled or CUDA is not available, training is performed in standard precision.
 
-\paragraph{Logging and checkpointing.}
-
+\analysispar{Logging and checkpointing}
 For each run, the framework writes a JSONL log, in which every line is a separate JSON object. Each resolved run is written to a separate JSONL file inside an experiment-specific log directory, so that later parsing scripts can process runs independently and aggregate them by configuration. This format is useful because later parsers can read the logs line by line and extract only the events needed for ranking, aggregation, or reporting. The first log event stores general information about the run, including the resolved configuration, the random seed, the device, the checkpoint location, and the total number of model parameters. More specifically, the number of parameters is computed as the sum of all tensor elements in the model parameters, and it can later be used to compare configurations not only in terms of validation performance, but also in terms of model size.
 
 Each run also saves a checkpoint containing both the model weights and the additional information needed to resume or reuse the run. This file includes the current and best validation model weights, optimizer information, the mixed-precision scaler when applicable, training and early-stopping information, random generator states, and the resolved configuration. Therefore, the same checkpoint can be used to resume training, restore the best validation model for test evaluation, or export qualitative examples.
 
-\paragraph{Test evaluation.}
-
+\analysispar{Test evaluation}
 When test evaluation is enabled in the experiment configuration file, it is also executed inside this stage of the pipeline. Before evaluation starts, the framework restores the best model state selected on the validation set by early stopping.
 
 The evaluator loops over the configured test manifests and computes global metrics over all samples. If the manifest contains a grouping field requested by the configuration, the evaluator also computes grouped metrics. This is how the same evaluation code supports category-level reporting for ExDark and illumination-level reporting for MILLs.

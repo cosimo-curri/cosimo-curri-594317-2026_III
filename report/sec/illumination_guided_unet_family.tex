@@ -41,3 +41,84 @@ The grid search uses the same screening budget as the baseline U-Net, with 144 c
 	\item Illumination estimator $\in$ luminance, maximum RGB response;
 	\item Illumination smoothing $\in$ disabled, Gaussian blur with $9 \times 9$ kernel and $\sigma = 1.5$.
 \end{itemize}
+
+\subsection{Quantitative Analysis}
+
+This subsection reports the quantitative behavior of the selected illumination-guided U-Net family. The final configuration is the one selected by the fixed experimental protocol of this project, and has $1.93$M trainable parameters. Table~\ref{tab:illumination_guided_unet_final_evaluation} reports the final evaluation of the selected illumination-guided U-Net configuration.
+
+\input{tab/illumination_guided_unet_final_evaluation}
+
+\analysispar{In-domain and cross-dataset evaluation}
+Since the training protocol is unchanged, LOL-v2 Real remains the in-domain reference. On this dataset, the illumination-guided U-Net obtains $0.841$ SSIM, $19.00$ dB PSNR, and $0.112$ MAE. These values show that the additional illumination channel does not automatically improve paired reconstruction on the source distribution. The model still learns a valid enhancement mapping, but its in-domain full-reference scores are slightly weaker than the baseline U-Net. This suggests that the explicit illumination cue changes the way the network distributes brightness, but it does not by itself make the RGB reconstruction closer to the paired target.
+
+LOL-v1 remains the closest cross-dataset case. Its SSIM is $0.882$, PSNR is $22.15$ dB, and MAE is $0.076$. Therefore, as already observed for the baseline family, this dataset is still highly compatible with a model trained on LOL-v2 Real. The result is important because it shows that the illumination-guided model does not lose the ability to generalize to a close LOL-like benchmark.
+
+The behavior changes on the more shifted paired datasets. On LOL-v2 Synthetic, the model obtains $0.761$ SSIM and $0.127$ MAE, which confirms that the synthetic degradation process remains different from the real low-light acquisition used for training. On MILLs, the drop is stronger: SSIM is $0.744$, PSNR is $16.72$ dB, and MAE rises to $0.144$. This indicates that the illumination cue alone is not sufficient to recover the paired target when the acquisition setting and illumination distribution are different from LOL-v2 Real.
+
+The diagnostic metrics clarify what the illumination map changes. Compared with the baseline behavior, ExDark becomes brighter and less dark overall: mean luminance is $0.417$ and the dark-pixel ratio is $3.4\%$. This is consistent with the intended mitigation, because ExDark was one of the cases where the baseline left many regions under-exposed. However, this improvement is not free. ExDark still has high BRISQUE, $33.85$, and a relatively high RGB imbalance, $0.078$. MILLs also has the largest RGB imbalance in the table, $0.089$. Therefore, the illumination-guided input helps the model expose dark regions more aggressively, but does not guarantee better naturalness, color balance, or target fidelity.
+
+\analysispar{ExDark category-level analysis}
+ExDark is further analyzed by object category because it is unpaired and category metadata is available. Table~\ref{tab:illumination_guided_unet_exdark_category} reports the category-level no-reference and diagnostic results.
+
+\input{tab/illumination_guided_unet_exdark_category}
+
+The category-level results show that the illumination-guided U-Net reduces residual darkness in several ExDark categories, but the difficulty of the dataset remains uneven. According to NIQE, motorbike is the best category, while boat is the worst. According to BRISQUE, bicycle is the best category, while cup is the worst. Since ExDark is unpaired, these scores do not measure reconstruction against a target. They instead indicate how natural or perceptually plausible the enhanced outputs appear according to no-reference estimators.
+
+The diagnostic metrics show that the remaining failures are concentrated in specific scene types. Cup and bottle still have the highest dark-pixel ratios, $5.0\%$ and $4.5\%$, meaning that small objects and indoor scenes with strong shadows may remain under-exposed even with the illumination cue. Car and people have the highest clipping ratios, suggesting that reflective surfaces, lamps, or bright local sources can still be over-amplified. Bottle has the highest RGB imbalance, $0.089$, followed closely by cup and bus, which is consistent with a stronger risk of color cast. Therefore, the illumination map helps with darkness, but it does not separate illumination correction from color preservation and local artifact control.
+
+\analysispar{MILLs illumination-level analysis}
+MILLs is paired, and its illumination-level metadata makes it possible to analyze how the illumination-guided U-Net behaves as input brightness changes. Table~\ref{tab:illumination_guided_unet_mills_illumination} reports the results grouped by illumination level.
+
+\input{tab/illumination_guided_unet_mills_illumination}
+
+The illumination-level results show a clear dependence on the severity of the input illumination. Level 1 is the hardest case in terms of structural similarity, with SSIM equal to $0.690$. From level 2 onward, SSIM progressively increases and reaches its maximum at level 9. PSNR follows the same general tendency and also peaks at level 9. This means that the model is more faithful to the paired target when the input is not extremely under-exposed.
+
+The MAE result must be interpreted carefully. Level 1 has the lowest MAE, but also the lowest SSIM. This means that the average absolute pixel error can be small even when the structure and local contrast are not well recovered. For low-light enhancement, this is why MAE should not be read alone: an output may be close in average intensity while still looking blurred or structurally inaccurate.
+
+The diagnostic metrics show that the illumination-guided model applies stronger brightening to MILLs than the baseline U-Net. The global mean luminance is around $0.477$, and the dark-pixel ratio falls from $1.8\%$ at level 1 to $0.2\%$ at level 10. Therefore, residual darkness is reduced. However, RGB imbalance stays high across all levels, around $0.087$--$0.092$, and the full-reference scores do not improve. This confirms the main limitation of this family: the model controls exposure more aggressively, but the correction is not sufficiently constrained to preserve color and target structure under a different dataset distribution.
+
+\analysispar{Summary}
+Overall, the quantitative analysis shows that the illumination-guided U-Net only partially solves the failure modes observed in the baseline. The explicit illumination cue reduces residual darkness, especially on ExDark and on the darker MILLs levels. However, this improvement does not translate into a general full-reference gain. In-domain performance on LOL-v2 Real is slightly weaker, MILLs reconstruction quality decreases, and RGB imbalance becomes more visible in cross-dataset settings. Therefore, the illumination channel is useful as a local brightness cue, but it is not sufficient to disentangle exposure correction, color preservation, denoising, and detail fidelity.
+
+\subsection{Qualitative Analysis}
+
+Visual inspection is useful to understand why the illumination-guided U-Net improves some diagnostic brightness indicators but does not improve all reconstruction metrics. Figure~\ref{fig:illumination_guided_unet_qualitative} reports one successful enhancement example and a set of representative failure cases.
+
+\input{fig/illumination_guided_unet_qualitative/illumination_guided_unet_qualitative}
+
+\analysispar{Successful enhancement}
+The first row shows a good enhancement example from LOL-v1. The input image is strongly under-exposed, but the illumination-guided U-Net recovers the open book, the paper texture, and the objects on the table. The output remains close to the target and does not introduce severe saturation. This example is useful because it shows the expected behavior of the illumination cue when the test image is compatible with the LOL-v2 Real training distribution: the model increases brightness while preserving the main scene structure.
+
+\analysispar{Residual darkness}
+The residual darkness example was selected from LOL-v1 because the paired target makes the remaining under-exposure easy to see. The colorful object on the right is enhanced, but the black bag or jacket on the left remains much less visible than in the target. This failure shows that the illumination map does not solve the problem when the input region contains extremely weak signal. A possible reason is that the maximum-RGB illumination estimate can tell the network that a region is dark, but it cannot recover texture that is almost absent from the input. The network can brighten the region, but it still has limited information to reconstruct the missing details faithfully.
+
+\analysispar{Over-exposure}
+The over-exposure example was selected from ExDark. The input contains a small bright window or light source surrounded by a very dark region. The output makes the scene more visible, but the bright area becomes saturated and the surrounding wall becomes flat and washed out. Since this image comes from ExDark, no paired target is available, but the artifact is visually clear. A possible reason is that the model learns to use the illumination cue to lift dark scenes aggressively, while the loss does not explicitly penalize local clipping. As a result, already bright regions can still be amplified too much.
+
+\analysispar{Color cast}
+The color cast example was selected from LOL-v2 Synthetic because the paired target shows the chromatic error clearly. The red flower in the target is vivid and saturated, while the output becomes paler, more orange, and partially shifted toward the green background. This failure is important because it shows that illumination guidance is not the same as color correction. The additional channel mainly describes brightness, not the correct balance between red, green, and blue. A possible reason is that the model is trained on real LOL-v2 images and then tested on a synthetic degradation process with different color statistics, so the learned correction improves exposure but does not preserve the target chromatic distribution.
+
+\analysispar{Over-smoothing}
+The over-smoothing example was selected from ExDark. The boat and the sea become brighter, but the output loses fine texture and the whole scene becomes soft. The water surface and the edges around the boat are less detailed than in the input. A possible reason is that the L1-SSIM objective still encourages a safe average reconstruction when details are uncertain. The illumination map helps the model decide where to brighten, but it does not add an explicit constraint that forces fine texture or edges to be preserved.
+
+\analysispar{Residual noise}
+The residual noise example was selected from ExDark because the output exposes high-frequency noise and uneven texture after enhancement. The fence and the ground become brighter, but the brightened image also reveals noisy patterns that were less visible in the input. This failure is different from over-smoothing: here the model does not only remove detail, but also amplifies undesirable high-frequency content. A possible reason is that the illumination-guided U-Net is not explicitly noise-aware. When a dark region is brightened, sensor noise is brightened together with real texture, and the current objective does not force the model to separate the two.
+
+\analysispar{Halo artifacts}
+The halo artifacts example was selected from ExDark. The cat and the stair edges are surrounded by bright contours after enhancement. This is a typical halo effect: brightness spreads around high-contrast structures and produces an unnatural outline. A possible reason is that the maximum-RGB illumination map can still contain sharp transitions around visible bright edges. If the network uses this cue too directly, it may over-amplify those transitions instead of applying a smooth and edge-aware correction.
+
+\analysispar{Hallucinated details}
+The hallucinated details example was selected from LOL-v2 Real because the paired target makes the non-faithful content visible. The enhanced output contains a hazy diagonal pattern over the court, while the target is cleaner and more uniform. This is a severe failure because the model is not only changing brightness, but also introducing visual structure that is not present in the reference. A possible reason is that the input is very dark and contains weak evidence for the true scene. In this situation, the model may produce plausible-looking patterns that reduce the training loss on average but are not faithful to the real target.
+
+\analysispar{Summary}
+Overall, the qualitative analysis confirms the quantitative conclusion. The illumination-guided U-Net can produce convincing results on close LOL-like cases, and it can reduce residual darkness in some cross-dataset images. However, the same mechanism can also create or preserve failures: over-exposure near local light sources, color shifts under different dataset statistics, over-smoothed textures, amplified noise, halos near strong edges, and hallucinated structures. These results show that explicit illumination information is useful, but it must be combined with constraints that control color, clipping, noise, and edge fidelity.
+
+\subsection{Mitigation Strategies}
+
+The results of this family provide an important intermediate test. The mitigation proposed after the baseline U-Net was to give the network an explicit local illumination cue. This strategy was useful but not sufficient: it reduced residual darkness in several diagnostic results, especially on ExDark, but it did not improve full-reference reconstruction consistently and it increased the risk of color imbalance and local artifacts. Therefore, the next mitigation should not only tell the model where the image is dark, but should also constrain how brightness correction interacts with color, texture, noise, and edges.
+
+A first mitigation strategy is to modify the objective in a frequency-aware way. The qualitative failures observed in this family do not all belong to the same visual scale. Exposure, color cast, and broad illumination errors are mainly low-frequency phenomena, because they vary smoothly over large image regions. Texture loss, residual noise, edge sharpness, and halo artifacts are instead mainly high-frequency phenomena, because they depend on local details and rapid spatial changes. This motivates a loss that decomposes prediction and target into low-frequency and high-frequency components, penalizing illumination and color errors on the former and detail-related errors on the latter. This direction is inspired by frequency-domain reconstruction losses, which show that spatial losses alone may not sufficiently control frequency content~\cite{DBLP:conf/iccv/JiangDWL21}.
+
+A second mitigation strategy is to add exposure consistency. The model should produce compatible enhanced outputs when the same input image is slightly perturbed with realistic photometric transformations, such as exposure changes, gamma variations, color-temperature shifts, or low-light noise. This idea is related to low-light enhancement methods that use explicit exposure, color, and illumination regularizers instead of relying only on paired pixel-wise supervision~\cite{DBLP:conf/cvpr/GuoLGLHKC20}. It is especially relevant for cross-dataset generalization, because different datasets may contain different camera responses, noise levels, and illumination curves. A model that remains stable under mild photometric perturbations is less likely to overfit the acquisition statistics of LOL-v2 Real.
+
+Based on these observations, the next family prioritizes these two mitigation strategies and introduces Frequency-Aware Exposure-Consistent Low-Light Enhancement (FAC-ECL). The idea is not to copy a full Retinex-style decomposition, but to take inspiration from works that separate illumination-related effects from reflectance or degradation-related effects~\cite{DBLP:conf/bmvc/WeiWY018,DBLP:journals/dsp/WeiLL24}. FAC-ECL tests a more focused hypothesis: cross-dataset enhancement can improve if the training objective separates low-frequency illumination and color correction from high-frequency detail and artifact control, while also encouraging stable predictions under realistic exposure perturbations. In this way, the transition remains incremental: the baseline U-Net tested a standard encoder-decoder mapping, the illumination-guided U-Net tested whether an explicit brightness cue was sufficient, and FAC-ECL changes the supervision to address the limitations that illumination guidance left unresolved.

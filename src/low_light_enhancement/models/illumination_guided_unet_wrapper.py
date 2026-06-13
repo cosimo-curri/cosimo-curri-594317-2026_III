@@ -4,14 +4,16 @@ from typing import Any
 
 import torch
 from torch import Tensor, nn
-import torch.nn.functional as F
 
 from src.low_light_enhancement.framework.config_validation import (
     require_non_negative_int,
     require_positive_float,
     require_positive_int
 )
-from src.low_light_enhancement.framework.image_ops import compute_luminance
+from src.low_light_enhancement.framework.image_ops import (
+    compute_luminance,
+    gaussian_blur_2d
+)
 from src.low_light_enhancement.framework.losses import build_loss
 from src.low_light_enhancement.models.unet import build_unet
 
@@ -68,7 +70,7 @@ class IlluminationGuidedUNetWrapper:
         if image.ndim != 4 or image.shape[1] != 3:
             raise ValueError(
                 "IlluminationGuidedUNetWrapper expects input tensors with "
-                f"shape [B, 3, H, W]. Got {tuple(image.shape)}."  # 4th here
+                f"shape [B, 3, H, W]. Got {tuple(image.shape)}."
             )
 
         if self.illumination_method == "luminance":
@@ -117,33 +119,3 @@ class IlluminationGuidedUNetWrapper:
             self.illumination_smoothing_sigma,
             "model.illumination_smoothing_sigma"
         )
-
-
-def gaussian_blur_2d(
-    image: Tensor,
-    *,  # next options are keyword-only
-    kernel_size: int,
-    sigma: float
-) -> Tensor:
-    coords = torch.arange(
-        kernel_size,
-        device=image.device,
-        dtype=image.dtype
-    ) - (kernel_size - 1) / 2.0
-
-    kernel_1d = torch.exp(-(coords ** 2) / (2.0 * sigma ** 2))
-    kernel_1d = kernel_1d / kernel_1d.sum()
-
-    kernel_2d = kernel_1d[:, None] * kernel_1d[None, :]
-    kernel_2d = kernel_2d.view(1, 1, kernel_size, kernel_size)
-
-    padding = kernel_size // 2
-
-    # Reflection padding avoids artificial dark borders in the illumination map
-    padded = F.pad(
-        image,
-        (padding, padding, padding, padding),
-        mode="reflect"
-    )
-
-    return F.conv2d(padded, kernel_2d)

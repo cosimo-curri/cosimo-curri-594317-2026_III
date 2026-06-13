@@ -91,3 +91,41 @@ def compute_ssim(
     )
 
     return ssim_map.mean()
+
+
+def gaussian_blur_2d(
+    image: Tensor,
+    *,
+    kernel_size: int,
+    sigma: float
+) -> Tensor:
+    if kernel_size % 2 == 0:
+        raise ValueError(
+            "kernel_size must be odd for Gaussian blur. "
+            f"Got {kernel_size}."
+        )
+
+    coords = torch.arange(
+        kernel_size,
+        device=image.device,
+        dtype=image.dtype
+    ) - (kernel_size - 1) / 2.0
+
+    kernel_1d = torch.exp(-(coords ** 2) / (2.0 * sigma ** 2))
+    kernel_1d = kernel_1d / kernel_1d.sum()
+
+    channel_count = image.shape[1]
+    kernel_2d = kernel_1d[:, None] * kernel_1d[None, :]
+    kernel_2d = kernel_2d.view(1, 1, kernel_size, kernel_size)
+    kernel_2d = kernel_2d.repeat(channel_count, 1, 1, 1)
+
+    padding = kernel_size // 2
+
+    # Reflection padding avoids artificial dark borders in the illumination map
+    padded = F.pad(
+        image,
+        (padding, padding, padding, padding),
+        mode="reflect"
+    )
+
+    return F.conv2d(padded, kernel_2d, groups=channel_count)

@@ -1,15 +1,28 @@
-\begin{thebibliography}{11}
+\begin{thebibliography}{14}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
 
+\bibitem[Guo et~al.(2020)Guo, Li, Guo, Loy, Hou, Kwong, and
+  Cong]{DBLP:conf/cvpr/GuoLGLHKC20}
+Chunle Guo, Chongyi Li, Jichang Guo, Chen~Change Loy, Junhui Hou, Sam Kwong,
+  and Runmin Cong.
+\newblock Zero-reference deep curve estimation for low-light image enhancement.
+\newblock In \emph{{CVPR}}, pages 1777--1786. Computer Vision Foundation /
+  {IEEE}, 2020.
+
 \bibitem[Guo et~al.(2017)Guo, Li, and Ling]{DBLP:journals/tip/GuoLL17}
 Xiaojie Guo, Yu Li, and Haibin Ling.
 \newblock {LIME:} low-light image enhancement via illumination map estimation.
 \newblock \emph{{IEEE} Trans. Image Process.}, 26\penalty0 (2):\penalty0
   982--993, 2017.
+
+\bibitem[Jiang et~al.(2021)Jiang, Dai, Wu, and Loy]{DBLP:conf/iccv/JiangDWL21}
+Liming Jiang, Bo Dai, Wayne Wu, and Chen~Change Loy.
+\newblock Focal frequency loss for image reconstruction and synthesis.
+\newblock In \emph{{ICCV}}, pages 13899--13909. {IEEE}, 2021.
 
 \bibitem[Loh and Chan(2019)]{DBLP:journals/cviu/LohC19}
 Yuen~Peng Loh and Chee~Seng Chan.
@@ -69,6 +82,12 @@ Zhou Wang, Alan~C. Bovik, Hamid~R. Sheikh, and Eero~P. Simoncelli.
 Chen Wei, Wenjing Wang, Wenhan Yang, and Jiaying Liu.
 \newblock Deep retinex decomposition for low-light enhancement.
 \newblock In \emph{{BMVC}}, page 155. {BMVA} Press, 2018.
+
+\bibitem[Wei et~al.(2024)Wei, Lin, and Li]{DBLP:journals/dsp/WeiLL24}
+Xinxu Wei, Xi Lin, and Yongjie Li.
+\newblock {DA-DRN:} {A} degradation-aware deep retinex network for low-light
+  image enhancement.
+\newblock \emph{Digit. Signal Process.}, 144:\penalty0 104256, 2024.
 
 \bibitem[Yang et~al.(2021)Yang, Wang, Huang, Wang, and
   Liu]{DBLP:journals/tip/YangWHWL21}

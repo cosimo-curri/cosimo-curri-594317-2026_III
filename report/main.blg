@@ -3,49 +3,44 @@ Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
 The top-level auxiliary file: main.aux
 The style file: ieeenat_fullname.bst
 Database file #1: main.bib
-Repeated entry---line 123 of file main.bib
- : @inproceedings{DBLP:conf/bmvc/WeiWY018
- :                                       ,
-I'm skipping whatever remains of this entry
-You've used 11 entries,
+You've used 14 entries,
             2708 wiz_defined-function locations,
-            664 strings with 6909 characters,
-and the built_in function-call counts, 5952 in all, are:
-= -- 525
-> -- 420
-< -- 3
-+ -- 140
-- -- 129
-* -- 531
-:= -- 929
-add.period$ -- 35
-call.type$ -- 11
-change.case$ -- 76
-chr.to.int$ -- 11
-cite$ -- 22
-duplicate$ -- 247
-empty$ -- 423
-format.name$ -- 142
-if$ -- 1226
+            687 strings with 7583 characters,
+and the built_in function-call counts, 8046 in all, are:
+= -- 722
+> -- 555
+< -- 5
++ -- 185
+- -- 171
+* -- 704
+:= -- 1230
+add.period$ -- 46
+call.type$ -- 14
+change.case$ -- 99
+chr.to.int$ -- 14
+cite$ -- 28
+duplicate$ -- 338
+empty$ -- 572
+format.name$ -- 187
+if$ -- 1685
 int.to.chr$ -- 1
 int.to.str$ -- 1
-missing$ -- 11
-newline$ -- 63
-num.names$ -- 44
-pop$ -- 139
+missing$ -- 14
+newline$ -- 78
+num.names$ -- 56
+pop$ -- 185
 preamble$ -- 1
-purify$ -- 65
+purify$ -- 85
 quote$ -- 0
-skip$ -- 189
+skip$ -- 269
 stack$ -- 0
-substring$ -- 216
-swap$ -- 29
-text.length$ -- 2
+substring$ -- 328
+swap$ -- 58
+text.length$ -- 4
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 121
+type$ -- 154
 warning$ -- 0
-while$ -- 49
+while$ -- 65
 width$ -- 0
-write$ -- 151
-(There was 1 error message)
+write$ -- 192
