@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.5.28)  14 JUN 2026 18:39
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026) (preloaded format=pdflatex 2026.5.28)  14 JUN 2026 19:17
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -623,14 +623,12 @@ on input line 6.
 
 LaTeX Warning: Float too large for page by 7.0pt on input line 9.
 
-) [25] [26 <./fig/fac_ecl_qualitative/fac_ecl_qualitative.png (PNG copy)>])
-(./sec/conclusion.tex) (./main.bbl (./main.brf)
+) [25] [26 <./fig/fac_ecl_qualitative/fac_ecl_qualitative.png (PNG copy)>]
+[27]) (./sec/conclusion.tex) (./main.bbl (./main.brf)
 \tf@brf=\write4
 \openout4 = `main.brf'.
 
- [27]) [28
-
-] (./main.aux)
+) [28] (./main.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-03-20>
@@ -638,7 +636,7 @@ L3 programming layer <2026-03-20>
 Package rerunfilecheck Info: File `main.out' has not changed.
 (rerunfilecheck)             Checksum: FC154B1E6FDC58D83BABFFC3488C7081;5744.
 Package rerunfilecheck Info: File `main.brf' has not changed.
-(rerunfilecheck)             Checksum: 92C3AEDB244C8B02EBE055FE6A14E0F4;1343.
+(rerunfilecheck)             Checksum: 8F5BD22FE8F21D731E645A90B97B14F8;1406.
  ) 
 Here is how much of TeX's memory you used:
  17619 strings out of 469296
@@ -647,7 +645,7 @@ Here is how much of TeX's memory you used:
  45724 multiletter control sequences out of 15000+600000
  672577 words of font info for 304 fonts, out of 8000000 for 9000
  36 hyphenation exceptions out of 8191
- 90i,12n,98p,1110b,639s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 90i,12n,98p,1110b,489s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></us
 r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/shar
 e/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texl
@@ -660,10 +658,10 @@ msfonts/cm/cmsy9.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/courier/ucr
 r8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/s
 hare/texlive/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/share/texlive/te
 xmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on main.pdf (28 pages, 9098285 bytes).
+Output written on main.pdf (28 pages, 9100166 bytes).
 PDF statistics:
- 496 PDF objects out of 1000 (max. 8388607)
- 428 compressed objects within 5 object streams
+ 498 PDF objects out of 1000 (max. 8388607)
+ 430 compressed objects within 5 object streams
  118 named destinations out of 1000 (max. 500000)
  59186 words of extra memory for PDF output out of 61914 (max. 10000000)
 

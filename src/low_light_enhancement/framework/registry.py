@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from src.low_light_enhancement.models.ecl_far_wrapper import ECLFARUNetWrapper
 from src.low_light_enhancement.models.fac_ecl_wrapper import FACECLUNetWrapper
 from src.low_light_enhancement.models.illumination_guided_unet_wrapper import (
     IlluminationGuidedUNetWrapper
@@ -12,7 +13,8 @@ from src.low_light_enhancement.models.unet_wrapper import UNetWrapper
 MODEL_REGISTRY = {
     "unet": UNetWrapper,
     "illumination_guided_unet": IlluminationGuidedUNetWrapper,
-    "fac_ecl": FACECLUNetWrapper
+    "fac_ecl": FACECLUNetWrapper,
+    "ecl_far": ECLFARUNetWrapper
 }
 
 

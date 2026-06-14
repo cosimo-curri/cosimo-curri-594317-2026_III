@@ -191,6 +191,65 @@ class FACECLLoss(nn.Module):
         )
 
 
+class ECLFARLoss(nn.Module):
+    def __init__(
+        self,
+        *,
+        l1_weight: float = 0.8,
+        ssim_weight: float = 0.2,
+        initial_weight: float = 0.2,
+        consistency_weight: float = 0.02,
+        window_size: int = 11
+    ) -> None:
+        super().__init__()
+
+        self.reconstruction_loss = L1SSIMLoss(
+            l1_weight=l1_weight,
+            ssim_weight=ssim_weight,
+            window_size=window_size
+        )
+
+        self.initial_weight = require_non_negative_float(
+            initial_weight,
+            "loss.initial_weight"
+        )
+
+        self.consistency_weight = require_non_negative_float(
+            consistency_weight,
+            "loss.consistency_weight"
+        )
+
+    def forward(
+        self,
+        output: Tensor | dict[str, Tensor],
+        target: Tensor
+    ) -> Tensor:
+        prediction = extract_prediction(output)
+        loss = self.reconstruction_loss(prediction, target)
+
+        initial_prediction = extract_initial_prediction(output)
+
+        if initial_prediction is not None and self.initial_weight > 0.0:
+            loss = loss + self.initial_weight * self.reconstruction_loss(
+                initial_prediction,
+                target
+            )
+
+        consistency_prediction = extract_ecl_far_consistency_prediction(output)
+
+        if (
+            initial_prediction is not None
+            and consistency_prediction is not None
+            and self.consistency_weight > 0.0
+        ):
+            loss = loss + self.consistency_weight * F.l1_loss(
+                consistency_prediction,
+                initial_prediction.detach()
+            )
+
+        return loss
+
+
 def extract_prediction(output: Tensor | dict[str, Tensor]) -> Tensor:
     if isinstance(output, Tensor):
         return output
@@ -205,6 +264,24 @@ def extract_consistency_prediction(
         return None
 
     return output.get("consistency_prediction")
+
+
+def extract_initial_prediction(
+    output: Tensor | dict[str, Tensor]
+) -> Tensor | None:
+    if isinstance(output, Tensor):
+        return None
+
+    return output.get("initial_prediction")
+
+
+def extract_ecl_far_consistency_prediction(
+    output: Tensor | dict[str, Tensor]
+) -> Tensor | None:
+    if isinstance(output, Tensor):
+        return None
+
+    return output.get("perturbed_prediction")
 
 
 def build_loss(config: dict[str, Any]) -> nn.Module:
@@ -226,6 +303,14 @@ def build_loss(config: dict[str, Any]) -> nn.Module:
             frequency_kernel_size=config["frequency_kernel_size"],
             frequency_sigma=config["frequency_sigma"],
             consistency_config=config.get("consistency")
+        )
+
+    if loss_name == "ecl_far":
+        return ECLFARLoss(
+            l1_weight=config["l1_weight"],
+            ssim_weight=config["ssim_weight"],
+            initial_weight=config["initial_weight"],
+            consistency_weight=config["consistency_weight"]
         )
 
     raise ValueError(f"Unsupported loss: {loss_name!r}.")

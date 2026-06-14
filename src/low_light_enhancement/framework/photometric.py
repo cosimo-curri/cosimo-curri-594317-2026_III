@@ -8,6 +8,7 @@ from torch import Tensor
 from src.low_light_enhancement.framework.config_validation import (
     require_non_negative_float,
     require_non_negative_range,
+    require_positive_float,
     require_positive_range
 )
 
@@ -20,6 +21,12 @@ DEFAULT_PHOTOMETRIC_CONFIG = {
     "color_temperature_delta": 0.05,
     "noise_sigma_min": 0.0,
     "noise_sigma_max": 0.015
+}
+
+DEFAULT_FIXED_PHOTOMETRIC_CONFIG = {
+    "exposure_factor": 1.08,
+    "gamma": 0.92,
+    "color_temperature_delta": 0.02
 }
 
 
@@ -66,6 +73,37 @@ def build_photometric_perturbation_config(
     }
 
 
+def build_fixed_photometric_perturbation_config(
+    config: dict[str, Any] | None
+) -> dict[str, float]:
+    if config is None:
+        config = {}
+
+    merged = dict(DEFAULT_FIXED_PHOTOMETRIC_CONFIG)
+    merged.update(config)
+
+    exposure_factor = require_positive_float(
+        merged["exposure_factor"],
+        "model.sensitivity_eval.exposure_factor"
+    )
+
+    gamma = require_positive_float(
+        merged["gamma"],
+        "model.sensitivity_eval.gamma"
+    )
+
+    color_temperature_delta = require_non_negative_float(
+        merged["color_temperature_delta"],
+        "model.sensitivity_eval.color_temperature_delta"
+    )
+
+    return {
+        "exposure_factor": exposure_factor,
+        "gamma": gamma,
+        "color_temperature_delta": color_temperature_delta
+    }
+
+
 def apply_photometric_perturbation(
     image: Tensor,
     config: dict[str, float]
@@ -94,6 +132,19 @@ def apply_photometric_perturbation(
     )
 
     return perturbed.clamp(0.0, 1.0)
+
+
+def apply_fixed_photometric_perturbation(
+    image: Tensor,
+    config: dict[str, float]
+) -> Tensor:
+    perturbed = image * config["exposure_factor"]
+    perturbed = perturbed.clamp_min(1e-6).pow(config["gamma"])
+
+    return apply_fixed_color_temperature_shift(
+        perturbed,
+        delta=config["color_temperature_delta"]
+    ).clamp(0.0, 1.0)
 
 
 def apply_exposure_scaling(
@@ -134,6 +185,23 @@ def apply_color_temperature_shift(
         ],
         dim=1
     )
+
+    return image * channel_scale.clamp_min(0.0)
+
+
+def apply_fixed_color_temperature_shift(
+    image: Tensor,
+    *,
+    delta: float
+) -> Tensor:
+    if delta == 0.0:
+        return image
+
+    channel_scale = torch.tensor(
+        [1.0 + delta, 1.0, 1.0 - delta],
+        device=image.device,
+        dtype=image.dtype
+    ).view(1, 3, 1, 1)
 
     return image * channel_scale.clamp_min(0.0)
 

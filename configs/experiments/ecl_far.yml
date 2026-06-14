@@ -1,0 +1,117 @@
+experiment:
+  name: ecl_far_grid_seed_0_screening
+  seed: 0
+  # restore_checkpoint:
+
+data:
+  train_manifest: data/preprocessed/lol_v2_real.csv  # for both training and validation
+  test_manifests:  # only for evaluation.run_test: true
+    - manifest: data/preprocessed/ex_dark.csv
+      group_by: category
+    - manifest: data/preprocessed/lol_v1.csv
+    - manifest: data/preprocessed/lol_v2_real.csv
+    - manifest: data/preprocessed/lol_v2_synthetic.csv
+    - manifest: data/preprocessed/mill_s.csv
+      group_by: illumination_level
+
+augmentation:  # fixed online train-time augmentation
+  enabled: true  # global switch (if false all augmentations are disabled)
+
+  horizontal_flip:
+    enabled: true
+    p: 0.5
+
+  random_resized_crop:
+    enabled: true
+    output_size: 256
+    scale_min: 0.85
+    scale_max: 1.0
+    ratio_min: 0.95
+    ratio_max: 1.05
+
+  color_jitter:  # input-only
+    enabled: true
+    p: 0.3
+    brightness_min: 0.9
+    brightness_max: 1.1
+    contrast_min: 0.9
+    contrast_max: 1.1
+    saturation_min: 0.95
+    saturation_max: 1.05
+
+  gamma_jitter:  # input-only
+    enabled: true
+    p: 0.3
+    gamma_min: 0.85
+    gamma_max: 1.15
+
+  sensor_noise:  # input-only
+    enabled: true
+    p: 0.2
+    sigma_min: 0.0
+    sigma_max: 0.015
+
+model:
+  name: ecl_far
+  channels:  # the only case where a list is used for the grid
+    - [32, 64, 128, 256]
+  normalization: group  # none | batch | instance | group
+  activation: leaky_relu  # relu | leaky_relu
+  group_count: 8  # used only by normalization: group
+  upsampling: transposed  # bilinear | transposed
+
+  refinement_channels: [32, 64]
+  residual_scale: [0.1, 0.2]
+
+  sensitivity_train:
+    - exposure_min: 0.9
+      exposure_max: 1.1
+      gamma_min: 0.9
+      gamma_max: 1.1
+      color_temperature_delta: 0.03
+      noise_sigma_min: 0.0
+      noise_sigma_max: 0.01
+    - exposure_min: 0.85
+      exposure_max: 1.15
+      gamma_min: 0.85
+      gamma_max: 1.15
+      color_temperature_delta: 0.05
+      noise_sigma_min: 0.0
+      noise_sigma_max: 0.015
+
+  sensitivity_eval:
+    exposure_factor: 1.08
+    gamma: 0.92
+    color_temperature_delta: 0.02
+
+optimizer:  # AdamW (beta1=0.9, beta2=0.999; they are not configurable)
+  lr: [0.0002, 0.0003, 0.0005]
+  weight_decay: 0.0001
+
+loss:
+  name: ecl_far  # SSIM window_size=11; it is not configurable
+
+  l1_weight: 0.8  # weights must be non-negative and sum to 1.0
+  ssim_weight: 0.2
+
+  initial_weight: [0.1, 0.2]
+  consistency_weight: [0.0, 0.02, 0.05]
+
+training:
+  epochs: 999
+  validation_rate: 1
+  batch_size: 16
+  num_workers: 4
+  mixed_precision: true  # true -> float32 & float16 | false -> float32
+  deterministic: false  # true -> reproducibility | false -> efficiency
+
+early_stopping:
+  monitor: ssim  # window_size=11; it is not configurable
+  mode_monitor: max
+  min_delta: 0.0001
+  patience: 15
+  tie_breaker: psnr
+  mode_tie_breaker: max
+
+evaluation:
+  run_test: false
