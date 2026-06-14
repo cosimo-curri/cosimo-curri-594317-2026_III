@@ -1,0 +1,124 @@
+\section{FAC-ECL Family}
+
+The third model family implemented in this project is Frequency-Aware Exposure-Consistent Low-Light Enhancement (FAC-ECL). This family is introduced after the illumination-guided U-Net because the previous experiment showed that providing an explicit brightness cue is useful but not sufficient. In particular, the illumination-guided model reduced some residual darkness indicators, but it did not consistently improve full-reference reconstruction and still showed color imbalance, texture loss, residual noise, and local artifacts.
+
+FAC-ECL tests a different hypothesis. Instead of adding another input channel, it keeps the image representation unchanged and modifies the training objective. The motivation is that low-light enhancement errors do not all have the same visual nature. Exposure and color errors usually affect large and smooth image regions, while texture, noise, edges, and halo artifacts are local high-frequency phenomena. Therefore, this family tries to separate these aspects during training. The idea is related to frequency-aware reconstruction objectives~\cite{DBLP:conf/iccv/JiangDWL21}, exposure-oriented low-light enhancement losses~\cite{DBLP:conf/cvpr/GuoLGLHKC20}, and Retinex or degradation-aware methods that distinguish illumination-related effects from reflectance or degradation-related effects~\cite{DBLP:conf/bmvc/WeiWY018,DBLP:journals/dsp/WeiLL24}. However, in this work FAC-ECL is implemented as a lightweight training-objective variant of the U-Net baseline, rather than as a full Retinex decomposition model.
+
+\subsection{Architecture}
+
+FAC-ECL uses the same U-Net backbone described in the baseline family. Therefore, the model is still an encoder-decoder network with convolutional blocks, downsampling stages, upsampling stages, skip connections, and a final sigmoid output in the $[0,1]$ range. The output is unchanged: the network predicts a three-channel enhanced RGB image.
+
+Unlike the illumination-guided U-Net, FAC-ECL does not concatenate an illumination map to the input. The input remains a standard three-channel RGB low-light image. This is an important design choice because the purpose of FAC-ECL is not to test a different input representation, but to test a different supervision strategy. In other words, the model is still asked to solve the same image-to-image mapping as the baseline U-Net, but it is trained with additional constraints that distinguish illumination, color, detail, and stability.
+
+For this reason, the architectural hyperparameters that are not specific to FAC-ECL are fixed to the best configuration selected for the classical U-Net family. This choice is more appropriate than inheriting the best configuration of the illumination-guided U-Net, because FAC-ECL uses a three-channel input, while the illumination-guided model uses a four-channel input. Therefore, the closest architectural reference is the selected U-Net baseline. Keeping the same backbone also makes the comparison easier to interpret: any difference between the baseline U-Net and FAC-ECL is mainly due to the training objective, not to a different model capacity or input format.
+
+During normal inference, FAC-ECL behaves exactly like the baseline U-Net: one low-light RGB image is passed through the network, and one enhanced RGB image is produced. During training, however, the wrapper also creates a perturbed version of the same input image and applies the same U-Net to it. The two forward passes share the same model weights. The first output is used for the standard paired reconstruction losses and for the frequency-aware terms. The second output is used only to compute the exposure-consistency term. Therefore, the additional branch is not a separate network; it is a training-time mechanism used to regularize the same U-Net.
+
+\subsection{Training Objective and Grid Search}
+
+FAC-ECL follows the same experimental protocol used for the previous model families, but it changes the training objective. The baseline U-Net and the illumination-guided U-Net are trained with a direct L1-SSIM reconstruction loss. FAC-ECL keeps this reconstruction term, because the task is still paired image enhancement, but adds two additional constraints. The first one is frequency-aware supervision, which separates smooth illumination and color information from local detail information. The second one is exposure consistency, which encourages the model to produce stable outputs when the same low-light image is slightly modified.
+
+The frequency-aware part separates each image into a low-frequency component and a high-frequency component. The low-frequency component is obtained by applying a Gaussian blur to the image:
+\begin{equation}
+	\mathrm{Low}(I;\sigma)
+	=
+	G_{\sigma} \ast I,
+	\label{eq:fac_ecl_low_frequency}
+\end{equation}
+where $I$ is the RGB image to be decomposed, $G_{\sigma}$ is a Gaussian kernel with standard deviation $\sigma$, and $\ast$ denotes convolution. The term $\mathrm{Low}(I;\sigma)$ therefore represents the smoothed version of image $I$ obtained by convolving it with the Gaussian kernel $G_{\sigma}$. The parameter $\sigma$ controls the strength of the smoothing: a larger value produces a stronger blur, while a smaller value keeps the smoothing more local. This low-frequency component contains smooth information such as global illumination, broad exposure changes, and slowly varying color trends.
+
+The high-frequency component is computed as the residual between the original image and its low-frequency version:
+\begin{equation}
+	\mathrm{High}(I;\sigma)
+	=
+	I - \mathrm{Low}(I;\sigma).
+	\label{eq:fac_ecl_high_frequency}
+\end{equation}
+Here, $\mathrm{High}(I;\sigma)$ is the high-frequency component of image $I$ computed using the same smoothing parameter $\sigma$. It represents what remains after subtracting the smooth component from the original image, and therefore mainly contains rapid spatial variations such as local details, edges, texture, noise, and fine artifacts.
+
+The exposure-consistency term is used to make the model more stable. During training, FAC-ECL takes the same low-light input image and creates a slightly modified version of it. This modified version is obtained with mild photometric changes, such as a small change in exposure, a small gamma correction, a slight color-temperature shift, or a small amount of low-light noise. The scene does not change: the objects, the structure, and the content of the image are still the same. Only the low-light appearance is slightly different. Therefore, the enhanced outputs should also be similar. If the model produces very different enhanced images from these two similar inputs, its prediction is not stable. For this reason, FAC-ECL adds a penalty between the output produced from the original input and the output produced from the perturbed input.
+
+The complete objective is defined by combining four terms. The first one is the reconstruction loss, which is the same L1-SSIM objective used for the previous U-Net families:
+\begin{equation}
+	\mathcal{L}_{\mathrm{rec}}
+	=
+	0.8\,\mathrm{MAE}(\hat{I}, I)
+	+
+	0.2\,\bigl(1-\mathrm{SSIM}(\hat{I}, I)\bigr).
+	\label{eq:fac_ecl_rec_loss}
+\end{equation}
+Here, $\hat{I}$ is the enhanced image predicted by the model, while $I$ is the paired normally exposed target. The MAE term penalizes pixel-wise differences, whereas the SSIM term encourages structural similarity between prediction and target.
+
+The second and third terms apply the same idea to the frequency decomposition introduced above. The low-frequency term compares the smooth components of prediction and target, while the high-frequency term compares their residual detail components:
+\begin{equation}
+	\mathcal{L}_{\mathrm{low}}
+	=
+	\mathrm{MAE}
+	\bigl(
+	\mathrm{Low}(\hat{I};\sigma),
+	\mathrm{Low}(I;\sigma)
+	\bigr),
+	\label{eq:fac_ecl_low_loss}
+\end{equation}
+\begin{equation}
+	\mathcal{L}_{\mathrm{high}}
+	=
+	\mathrm{MAE}
+	\bigl(
+	\mathrm{High}(\hat{I};\sigma),
+	\mathrm{High}(I;\sigma)
+	\bigr).
+	\label{eq:fac_ecl_high_loss}
+\end{equation}
+The low-frequency loss is intended to guide broad illumination, exposure, and color correction, while the high-frequency loss focuses on local structures such as edges, texture, and fine details.
+
+The fourth term is the exposure-consistency loss. It compares the prediction obtained from the original low-light input with the prediction obtained from a mildly perturbed version of the same input:
+\begin{equation}
+	\mathcal{L}_{\mathrm{cons}}
+	=
+	\mathrm{MAE}
+	\bigl(
+	f(x),
+	f(T(x))
+	\bigr).
+	\label{eq:fac_ecl_cons_loss}
+\end{equation}
+In this equation, $x$ is the original low-light input, $T(x)$ is the same input after a mild photometric perturbation, and $f$ is the enhancement network. Since both inputs represent the same scene, this term encourages the model to produce similar enhanced outputs instead of reacting too strongly to small exposure, gamma, color, or noise variations.
+
+The final FAC-ECL objective is obtained by weighting and summing these components:
+\begin{equation}
+	\begin{aligned}
+		\mathcal{L}_{\mathrm{FAC\text{-}ECL}}
+		&=
+		\mathcal{L}_{\mathrm{rec}}
+		+
+		\lambda_{\mathrm{low}}\,\mathcal{L}_{\mathrm{low}} \\
+		&\quad+
+		\lambda_{\mathrm{high}}\,\mathcal{L}_{\mathrm{high}}
+		+
+		\lambda_{\mathrm{cons}}\,\mathcal{L}_{\mathrm{cons}}.
+	\end{aligned}
+	\label{eq:fac_ecl_loss}
+\end{equation}
+The coefficients $\lambda_{\mathrm{low}}$, $\lambda_{\mathrm{high}}$, and $\lambda_{\mathrm{cons}}$ control the importance of the low-frequency, high-frequency, and consistency terms, respectively.
+
+The FAC-ECL grid search is designed to keep the comparison with the previous families controlled. Since FAC-ECL still uses a standard three-channel RGB input, the closest architectural reference is the best configuration selected for the classical U-Net family, not the illumination-guided U-Net. The illumination-guided model uses a four-channel input because it concatenates an illumination map to the RGB image, while FAC-ECL does not. Therefore, the channel schedule, normalization strategy, upsampling method, and weight decay are fixed to the selected U-Net baseline values. This makes the comparison easier to interpret, because FAC-ECL mainly tests the effect of changing the loss function rather than changing the backbone.
+
+The learning rate is still varied in the grid. This is necessary because FAC-ECL changes the objective optimized during training. Adding low-frequency, high-frequency, and consistency terms can change the magnitude and direction of the gradients. If the learning rate were fixed, a poor result could be caused by an unsuitable optimization scale rather than by the FAC-ECL idea itself. For this reason, the grid includes the learning rate together with the FAC-ECL-specific loss weights. The explored hyperparameter space is:
+
+\begin{itemize}[topsep=5pt]
+	\item Learning rate $\in$ $2{\cdot}10^{-4}$, $3{\cdot}10^{-4}$, $5{\cdot}10^{-4}$, $10^{-3}$;
+	\item Low-frequency weight $\lambda_{\mathrm{low}} \in$ $0.05$, $0.10$, $0.20$;
+	\item High-frequency weight $\lambda_{\mathrm{high}} \in$ $0.05$, $0.10$, $0.20$;
+	\item Exposure-consistency weight $\lambda_{\mathrm{cons}} \in$ $0.02$, $0.05$, $0.10$, $0.20$.
+\end{itemize}
+
+The low-frequency weight controls how strongly the model is encouraged to match the smooth illumination and color structure of the target. If this value is too small, the model may behave similarly to the baseline and may not sufficiently address exposure or color errors. If it is too large, the model may over-prioritize smooth brightness and color trends at the expense of local detail.
+
+The high-frequency weight controls how strongly the model is encouraged to match local structures. This term is intended to reduce over-smoothing and preserve edges and texture. However, it must be balanced carefully because high-frequency content can also include noise, especially in very dark regions.
+
+The exposure-consistency weight controls the importance of stability under photometric perturbations. A small value makes the consistency term a weak regularizer, while a larger value forces the model to produce more similar outputs for the original and perturbed inputs. This can improve robustness, but an excessive value may also make the model too conservative and reduce its ability to adapt to difficult low-light inputs.
+
+The Gaussian blur used for the frequency decomposition is kept fixed in the grid, with kernel size $15 \times 15$ and standard deviation $\sigma = 3.0$. These values are chosen to separate broad illumination and color trends from local texture and edge information. The photometric perturbation ranges are also fixed and kept mild, because the goal is not to create a new synthetic dataset, but to expose the model to small realistic variations of the same input scene.
+
+Combining these choices gives 144 FAC-ECL configurations in the single-seed screening stage.
